@@ -1,0 +1,6 @@
+venv
+venv/
+.env
+__pychache__
+.cache_ggshield
+__pycache__/
