@@ -1,17 +1,15 @@
-rootDir: &rootDir backend
-
 services:
   - type: web
     name: momobot-cg-api
     env: python
     pythonVersion: 3.12
+    rootDir: backend 
     plan: free
     region: oregon
     buildCommand: |
-      cd *rootDir
       pip install --upgrade pip setuptools wheel
-      pip install --prefer-binary -r requirements.txt
-    startCommand: cd *rootDir &&uvicorn main:app --host 0.0.0.0 --port 8000
+      pip install --only-binary=:all: -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 8000
     autoDeploy: true
     envVars:
       - key: AZURE_OPENAI_ENDPOINT
