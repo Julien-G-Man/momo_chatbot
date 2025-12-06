@@ -5,7 +5,7 @@ import ChatPage from "./pages/ChatPage";
 import { pingHealth } from "./healthPing"; 
 import "./index.css";
 
-const API_URL = import.meta.env.VITE_BASE_API_URL || ""; 
+const API_URL = import.meta.env.VITE_BASE_API_URL || "http://momobot-cg-api.onrender.com"; 
 
 function App() {
   // Ping backend on first load
