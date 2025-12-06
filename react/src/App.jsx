@@ -2,10 +2,10 @@ import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import ChatPage from "./pages/ChatPage";
-import { pingHealth } from "./healthPing"; // your helper function
+import { pingHealth } from "./healthPing"; 
 import "./index.css";
 
-const API_URL = import.meta.env.VITE_BASE_API_URL || ""; // Vercel env variable
+const API_URL = import.meta.env.VITE_BASE_API_URL || ""; 
 
 function App() {
   // Ping backend on first load
