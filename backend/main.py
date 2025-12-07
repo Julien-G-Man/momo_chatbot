@@ -79,13 +79,16 @@ def read_root():
 
 MODEL_FOR_TOKEN_COUNT = "gpt-4o-mini"
 
-def count_number_of_tokens(text: str) -> int:
+def count_number_of_tokens(text: str, model:str = MODEL_FOR_TOKEN_COUNT) -> tuple[int, int, int]:
     """
     Returns token count and prints basic stats:
       - number of characters
       - number of words
       - number of tokens (per tiktoken for chosen model)
     """
+    if text is None:
+        text = ""
+        
     if not isinstance(text, str):
         text = str(text)
 
@@ -97,13 +100,23 @@ def count_number_of_tokens(text: str) -> int:
     except Exception:
         # fallback to a generic encoding if model-specific one isn't available
         enc = tiktoken.get_encoding("cl100k_base")
+    
     tokens = enc.encode(text)
     num_tokens = len(tokens)
 
-    print(f"Characters: {num_chars}")
-    print(f"Words: {num_words}")
-    print(f"Tokens ({MODEL_FOR_TOKEN_COUNT}): {num_tokens}")
-    return num_tokens
+    return num_tokens, num_words, num_tokens
+
+def log_kb_chunk_token_usage(kb_chunks: Dict[str, str], model: str = MODEL_FOR_TOKEN_COUNT) -> None:
+    """
+    Logs token counts per KB chunk for debugging / token budgeting.
+    """
+    total = 0
+    for k, text in kb_chunks.items():
+        _, _, tokens = count_number_of_tokens(text, model)
+        logger.info("KB chunk '%s' tokens=%d", k, tokens)
+        total += tokens
+    logger.info("KB TOTAL tokens (all chunks): %d", total)
+
 
 def strip_markdown(text: str) -> str:
     """Removes non-essential Markdown characters from a string, preserving list markers and codes."""
@@ -291,9 +304,8 @@ async def chat_with_bot(
     Handles an incoming user message and returns a response from Azure OpenAI.
     Injects relevant knowledge base data and maintains a short chat history
     for context. Supports guest users without breaking if the user is unauthenticated.
-    """
+    """    
     
-    # 1. Identify the user (guest mode)
     class GuestUser:
         id = 1
         username = "Guest"
@@ -302,7 +314,6 @@ async def chat_with_bot(
     logger.info("Chat request from public user (ID: %s, Username: %s)",
                 current_user.id, current_user.username)
 
-    # 2. Validate the incoming message
     user_message = getattr(request, "message", None)
     if not user_message or not isinstance(user_message, str):
         raise HTTPException(
@@ -310,7 +321,6 @@ async def chat_with_bot(
             detail="`message` must be a non-empty string in the request body."
         )
 
-    # 3. Retrieve relevant KB context
     try:
         relevant_context = get_keyword_filtered_context(
             user_message,
@@ -331,7 +341,6 @@ async def chat_with_bot(
     ):
         include_kb = True
 
-    # 4. Build system prompt
     personalized_system_prompt = (
         SYSTEM_PROMPT
         + f"\nThe current user's username is {current_user.username}. "
@@ -344,7 +353,6 @@ async def chat_with_bot(
         if include_kb else personalized_system_prompt
     )
 
-    # 5. Retrieve recent conversation history
     history_rows = (
         db.query(models.ChatMessage)
         .filter(models.ChatMessage.user_id == current_user.id)
@@ -364,27 +372,31 @@ async def chat_with_bot(
         conversation_messages.append({"role": "assistant", "content": ai_r})
         history_plain_text_parts.extend([user_q, ai_r])
 
-    # 6. Build final messages payload
     messages = [{"role": "system", "content": system_message_content}]
     messages.extend(conversation_messages)
     messages.append({"role": "user", "content": user_message})
 
-    # 7. Call Azure OpenAI
     try:
         ai_response = await call_azure_openai_with_backoff(messages)
         ai_response = strip_markdown(ai_response)
-        ai_response = enforce_list_indentation(ai_response, 2)
+        ai_response = enforce_list_indentation(ai_response, 4)
 
-        # 8. Token counting 
         combined_input_for_count = " ".join(
             [system_message_content, " ".join(history_plain_text_parts), user_message]
         )
-        print("Input token counts:")
-        count_number_of_tokens(combined_input_for_count)
-        print("\nOutput token counts:")
-        count_number_of_tokens(ai_response)
 
-        # 9. Save chat in DB (guest user)
+        log_kb_chunk_token_usage(INITIAL_KB_CHUNKS)
+
+        input_chars, input_words, input_tokens = count_number_of_tokens(combined_input_for_count)
+        output_chars, output_words, output_tokens = count_number_of_tokens(ai_response)
+
+        hist_chars, hist_words, hist_tokens = count_number_of_tokens(" ".join(history_plain_text_parts))
+
+        print("\nToken counts summary:")
+        print(f"  INPUT  -> Characters: {input_chars} | Words: {input_words} | Tokens ({MODEL_FOR_TOKEN_COUNT}): {input_tokens}")
+        print(f"  OUTPUT -> Characters: {output_chars} | Words: {output_words} | Tokens ({MODEL_FOR_TOKEN_COUNT}): {output_tokens}")
+        print(f"  HISTORY-> Characters: {hist_chars} | Words: {hist_words} | Tokens ({MODEL_FOR_TOKEN_COUNT}): {hist_tokens}")
+
         chat_log = models.ChatMessage(
             user_id=current_user.id,
             user_query=user_message,
@@ -401,8 +413,7 @@ async def chat_with_bot(
         return ChatResponse(response=ai_response)
 
     except HTTPException as e:
-        logger.error("Chat failed with HTTP Error: %s",
-                     getattr(e, "detail", str(e)))
+        logger.error("Chat failed with HTTP Error: %s", getattr(e, "detail", str(e)))
         raise e
     except Exception as e:
         logger.exception("Unexpected error while processing chat request: %s", e)

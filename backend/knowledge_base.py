@@ -353,8 +353,15 @@ def build_inverted_index(kb_chunks: Dict[str, str]) -> Dict[str, List[str]]:
         # also split by words with punctuation kept? not necessary for now
     return index
 
-def count_number_of_tokens(text: str) -> int:
-    """ Returns token count and prints basic stats """
+MODEL_FOR_TOKEN_COUNT = "gpt-4o-mini"
+
+def count_number_of_tokens(text: str, model:str = MODEL_FOR_TOKEN_COUNT) -> tuple[int, int, int]:
+    """
+    Returns token count and prints basic stats:
+      - number of characters
+      - number of words
+      - number of tokens (per tiktoken for chosen model)
+    """
     if not isinstance(text, str):
         text = str(text)
 
@@ -362,13 +369,15 @@ def count_number_of_tokens(text: str) -> int:
     num_words = len(text.split())
 
     try:
-        enc = tiktoken.encoding_for_model('gpt-4o-mini')
+        enc = tiktoken.encoding_for_model(MODEL_FOR_TOKEN_COUNT)
     except Exception:
         # fallback to a generic encoding if model-specific one isn't available
         enc = tiktoken.get_encoding("cl100k_base")
+    
     tokens = enc.encode(text)
     num_tokens = len(tokens)
-    return num_tokens
+
+    return num_tokens, num_words, num_tokens
 
 # ---- Core filter (fast) ----
 def get_keyword_filtered_context(
@@ -379,15 +388,15 @@ def get_keyword_filtered_context(
     max_kb_tokens: int = MAX_KB_TOKENS
 ) -> str:
     """
-    Returns concatenated KB sections that match user_query, up to token budget.
-    kb_chunks: dict key -> text (your INITIAL_KB_CHUNKS)
-    inverted_index: token -> [keys]
+    Find the most relevant KB chunks using keyword matching and return them
+    concatenated up to a token budget. Logs token counts per chunk and total.
     """
     if not user_query:
         return ""
 
     keywords = extract_keywords(user_query)
-    print(keywords)
+    print(f"User input: {user_query}")
+    print(f"Filtered Key words: {keywords}")
     if not keywords:
         return ""
 
@@ -410,8 +419,9 @@ def get_keyword_filtered_context(
 
     # rank by score desc, tie-breaker by chunk length asc (prefer concise)
     ranked = sorted(score.items(), key=lambda x: (-x[1], len(kb_chunks.get(x[0], ""))))
-    selected = []
+    selected: List[Tuple[str, str]] = []
     tokens_used = 0
+    total_kb_tokens = 0
 
     for key, sc in ranked:
         if len(selected) >= max_chunks:
@@ -419,25 +429,42 @@ def get_keyword_filtered_context(
         text = kb_chunks.get(key, "")
         if not text:
             continue
-        tcount = count_number_of_tokens(text)
+        
+        _, _, tcount = count_number_of_tokens(text)
+        
         if tokens_used + tcount <= max_kb_tokens:
             selected.append((key, text))
             tokens_used += tcount
+            total_kb_tokens += tcount
         else:
             # try to truncate text to fit
             allowed = max_kb_tokens - tokens_used
             if allowed <= 0:
                 break
-            # approximate char truncation proportionally
-            ratio = allowed / max(1, tcount)
-            keep_chars = max(MIN_TOKEN_KEEP, int(len(text) * ratio))
-            truncated = text[:keep_chars].rsplit("\n", 1)[0]
-            selected.append((key, truncated))
-            tokens_used += count_number_of_tokens(truncated)
+            
+            # approximate proportional character truncation to hit allowed tokens
+            # compute current tokens and length then scale down
+            cur_chars = len(text)
+            cur_tokens = tcount or 1
+            ratio = allowed / cur_tokens
+            # ensure we keep at least MIN_TOKEN_KEEP chars
+            keep_chars = max(MIN_TOKEN_KEEP, int(cur_chars * ratio))
+            truncated = text[:keep_chars].rsplit("\n", 1)[0].strip()
+
+            # recompute token count of truncated chunk and append if positive
+            _, _, truncated_tokens = count_number_of_tokens(truncated)
+            if truncated_tokens > 0:
+                selected.append((key, truncated))
+                tokens_used += truncated_tokens
+                total_kb_tokens += truncated_tokens
             break
 
-    # format nicely with headers so LLM knows source
-    out = []
+    # format result and log chunk/token insights
+    out_parts = []
     for k, t in selected:
-        out.append(f"[{k}]\n{t.strip()}")
-    return "\n\n".join(out)
+        _, _, chunk_tokens = count_number_of_tokens(t)
+        logger.info("KB Chunk '%s' tokens=%d", k, chunk_tokens)
+        out_parts.append(f"[{k}]\n{t.strip()}")
+
+    logger.info("Total KB tokens included: %d", total_kb_tokens)
+    return "\n\n".join(out_parts)
