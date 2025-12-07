@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
+echo "=== build.sh: starting ==="
 
-echo "=== BUILD START: $(date) ==="
-echo "Working dir: $(pwd)"
-python -V
-which python || true
-python -m pip install --upgrade pip setuptools wheel
-# prefer wheels, print pip debug info
-python -m pip install --prefer-binary -r requirements.txt --verbose
-echo "=== BUILD END: $(date) ==="
+# Upgrade pip
+python -m pip install --upgrade pip
+
+# Install dependencies
+pip install -r requirements.txt
+
+echo "=== build.sh: finished ==="
+

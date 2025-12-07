@@ -1,14 +1,16 @@
 services:
   - type: web
     name: momobot-cg-api
-    env: docker
-    dockerfilePath: backend/Dockerfile
+    env: python
     plan: free
     region: oregon
-    rootDir: .           
-    startCommand: ""    
+    rootDir: backend
+    buildCommand: "bash build.sh"
+    startCommand: uvicorn main:app --host 0.0.0.0 --port 8000
     autoDeploy: true
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.16"
       - key: AZURE_OPENAI_ENDPOINT
         fromSecret: AZURE_OPENAI_ENDPOINT
       - key: AZURE_OPENAI_API_KEY
