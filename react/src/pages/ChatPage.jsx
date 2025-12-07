@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import logoImage from '../assets/logo.png';
 
-const BACKEND_BASE_URL = import.meta.env.VITE_BASE_API_URL; 
-const API_URL = `${BACKEND_BASE_URL}/chat`;
+const API_URL = `${apiUrl}/chat`;
 
-function ChatPage() {
+function ChatPage({ apiUrl }) {
+  const API_URL = `${apiUrl}/chat`;
   const [messages, setMessages] = useState([
     { id: 1, text: "Welcome to MomoChat! How can I assist you with MTN MoMo's services today?", sender: 'bot' },
   ]);
@@ -13,10 +13,12 @@ function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const chatHistoryRef = useRef(null);
 
-  // Auto-scroll to the bottom when messages update
+  // Auto-scroll to bottom
   useEffect(() => {
     chatHistoryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages]);
+
+  const generateUniqueId = () => Date.now() + Math.floor(Math.random() * 10000);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -24,33 +26,30 @@ function ChatPage() {
     if (isLoading || text === '') return;
 
     // Add user message
-    const newUserMessage = { id: Date.now(), text: text, sender: 'user' };
+    const newUserMessage = { id: generateUniqueId(), text, sender: 'user' };
     setMessages(prev => [...prev, newUserMessage]);
     setInputText('');
     setIsLoading(true);
 
     try {
-      // Call FastAPI backend
       const response = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text }),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
       const data = await response.json();
       const botResponseText = data.response || "MomoChat couldn't find an answer. Try rephrasing.";
 
-      // 3. Add bot message
-      const newBotMessage = { id: Date.now() + 1, text: botResponseText, sender: 'bot' };
+      // Add bot message
+      const newBotMessage = { id: generateUniqueId(), text: botResponseText, sender: 'bot' };
       setMessages(prev => [...prev, newBotMessage]);
 
     } catch (error) {
       console.error("API Connection Error:", error);
-      const errorMessage = { id: Date.now() + 2, text: "Connection error. Please check your FastAPI server.", sender: 'bot' };
+      const errorMessage = { id: generateUniqueId(), text: "Connection error. Please check your FastAPI server.", sender: 'bot' };
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
@@ -59,26 +58,22 @@ function ChatPage() {
 
   const renderMessage = (message) => {
     const messageClass = message.sender === 'user' ? 'user-message' : 'bot-message';
-    
     return (
       <div key={message.id} className={`message ${messageClass}`}>
-        <div className="message-text">
-          {message.text}
-        </div>
+        <div className="message-text">{message.text}</div>
       </div>
     );
   };
 
   return (
-    <div className="chat-app-container"> 
-      
+    <div className="chat-app-container">
       {/* HEADER */}
       <header className="navbar">
         <div className="logo">
-          <Link to="/"> 
+          <Link to="/">
             <span className="logo-icon">
               <img src={logoImage} alt="MomoChat Logo" style={{ height: '30px' }} />
-            </span> 
+            </span>
           </Link>
         </div>
         <Link to="/" className="home-link">Home</Link>
@@ -88,30 +83,28 @@ function ChatPage() {
       <main className="chat-main">
         <div id="chat-history" className="chat-history">
           {messages.map(renderMessage)}
-          <div ref={chatHistoryRef} /> {/* Scroll target at the bottom */}
-          
-          {/* TYPING INDICATOR: Visible when loading */}
+          <div ref={chatHistoryRef} /> {/* Scroll target */}
           {isLoading && (
-             <div id="typing-indicator" className="typing-indicator">
-               <span></span><span></span><span></span>
-             </div>
+            <div id="typing-indicator" className="typing-indicator">
+              <span></span><span></span><span></span>
+            </div>
           )}
         </div>
       </main>
 
       {/* INPUT AREA */}
       <form onSubmit={handleSendMessage} className="chat-input-area">
-        <input 
-          type="text" 
-          id="user-input" 
+        <input
+          type="text"
+          id="user-input"
           placeholder="Ask your internal question..."
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           disabled={isLoading}
           autoComplete="off"
         />
-        <button 
-          id="send-button" 
+        <button
+          id="send-button"
           className="cta-button primary"
           type="submit"
           disabled={isLoading || inputText.trim() === ''}
@@ -119,7 +112,6 @@ function ChatPage() {
           <span className="send-icon">➤</span>
         </button>
       </form>
-
     </div>
   );
 }

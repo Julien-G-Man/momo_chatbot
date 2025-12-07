@@ -11,7 +11,9 @@ if not SQLALCHEMY_DATABASE_URL:
     raise EnvironmentError("DATABASE_URL must be set in the environment.")
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL
+    SQLALCHEMY_DATABASE_URL,
+    echo=True,
+    future=True
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

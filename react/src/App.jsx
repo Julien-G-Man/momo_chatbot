@@ -5,7 +5,9 @@ import ChatPage from "./pages/ChatPage";
 import { pingHealth } from "./healthPing"; 
 import "./index.css";
 
-const API_URL = import.meta.env.VITE_BASE_API_URL || "http://momobot-cg-api.onrender.com"; 
+// Main backend URL
+const API_URL = import.meta.env.VITE_BASE_API_URL || "http://momobot-cg-api.onrender.com";
+console.log("Using API URL: ", API_URL);
 
 function App() {
   // Ping backend on first load
@@ -15,7 +17,7 @@ function App() {
     // Keep backend awake while user has the page open
     const interval = setInterval(() => {
       pingHealth(API_URL);
-    }, 10 * 60 * 1000); // every 4 minutes
+    }, 10 * 60 * 1000); // every 10 minutes
 
     return () => clearInterval(interval);
   }, []);
@@ -24,7 +26,8 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/chat" element={<ChatPage />} />
+        {/* Pass main backend URL to ChatPage */}
+        <Route path="/chat" element={<ChatPage apiUrl={API_URL} />} />
       </Routes>
     </Router>
   );
