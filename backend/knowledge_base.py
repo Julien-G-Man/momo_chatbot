@@ -231,6 +231,14 @@ Dial *105*42# to access XtraCash services. Menu options include:
 
 """
 
+REMITTANCE = """
+
+"""
+
+SELF_REVERSAL = """
+
+"""
+
 KNOWLEDGE_BASE = f"""
 MOMO SERVICES:
 1. MOMO ADVANCE\n{MOMO_ADVANCE}\n

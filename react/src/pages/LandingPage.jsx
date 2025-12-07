@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import logoImage from "../assets/logo.png";
-import heroIllustration from "../assets/momo_chat_hero_illustration.png";
+import heroIllustration from "../assets/hero_illustration.png";
 import ctaImage from "../assets/mrcarl_and_team.jpg"; 
 
 // --- Language Dictionary ---
@@ -46,7 +46,7 @@ const languageData = {
         
         // Features Section
         featuresTitle: "Pourquoi Utiliser MoMoChat ?",
-        featuresSubtitle: "Découvrez une nouvelle manière simple et rapide d'accéder aux informations de support client.",
+        featuresSubtitle: "Découvrez une nouvelle manière simple et rapide d'accéder aux informations de service client.",
         
         feature1Title: "Accès Instantané aux Réponses",
         feature1Text: "Trouvez les procédures, les solutions aux problèmes courants et les informations de compte en quelques secondes. Plus de temps perdu au téléphone.",
@@ -131,7 +131,7 @@ function LandingPage() {
             {/* Feature 1: Instant Knowledge Access (🤖) */}
             <div className="feature-item">
                 <div className="feature-icon-wrapper">
-                <span role="img" aria-label="Robot icon" style={{fontSize: '2.5rem'}}>🤖</span>
+                <span role="img" aria-label="Robot icon" style={{fontSize: '2.5rem'}}>⚡</span>
                 </div>
                 <h3>{t.feature1Title}</h3>
                 <p>{t.feature1Text}</p>
@@ -149,7 +149,7 @@ function LandingPage() {
             {/* Feature 3: Always On Assistant (⚡) */}
             <div className="feature-item">
                 <div className="feature-icon-wrapper">
-                <span role="img" aria-label="Lightning icon" style={{fontSize: '2.5rem'}}>⚡</span>
+                <span role="img" aria-label="Lightning icon" style={{fontSize: '2.5rem'}}>🤖</span>
                 </div>
                 <h3>{t.feature3Title}</h3>
                 <p>{t.feature3Text}</p>
