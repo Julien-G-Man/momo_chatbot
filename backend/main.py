@@ -11,6 +11,7 @@ from schemas import ChatRequest, ChatResponse
 from typing import Optional, Union, List, Dict, Any
 from datetime import datetime
 from dotenv import load_dotenv
+from uuid import uuid4
 from fastapi import FastAPI, APIRouter, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -53,6 +54,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+guest_sessions: dict[str, list[dict]] = {}
 
 def create_database_tables():
     """Creates all database tables defined in models.py."""
@@ -314,27 +317,29 @@ async def chat_with_bot(
     db: Session = Depends(get_db),
 ):
     """
-    Handles incoming user messages, injects the knowledge base (only when relevant),
-    and returns a response from Azure OpenAI. Uses the precomputed STRUCTURED_KB so
-    we don't regenerate embeddings for every request.
+    Handles an incoming user message and returns a response from Azure OpenAI.
+    Injects relevant knowledge base data and maintains a short chat history
+    for context. Supports guest users without breaking if the user is unauthenticated.
     """
-    # --- GUEST USER ASSIGNMENT (Unauthenticated Mode) ---
-    GUEST_USER_ID = 1
-    guest_username = "Guest"
-
+    
+    # 1. Identify the user (guest mode)
     class GuestUser:
-        id = GUEST_USER_ID
-        username = guest_username
+        id = 1
+        username = "Guest"
 
     current_user = GuestUser()
-    logger.info("Chat request from public user (ID: %s, Username: %s)", current_user.id, current_user.username)
+    logger.info("Chat request from public user (ID: %s, Username: %s)",
+                current_user.id, current_user.username)
 
-    # Validate incoming message
+    # 2. Validate the incoming message
     user_message = getattr(request, "message", None)
     if not user_message or not isinstance(user_message, str):
-        raise HTTPException(status_code=400, detail="`message` must be a non-empty string in the request body.")
+        raise HTTPException(
+            status_code=400,
+            detail="`message` must be a non-empty string in the request body."
+        )
 
-    # Get the best matching KB context (this function expects the structured_kb dict)
+    # 3. Retrieve relevant KB context
     try:
         relevant_context = get_keyword_filtered_context(
             user_message,
@@ -344,29 +349,31 @@ async def chat_with_bot(
             max_kb_tokens=600
         )
     except Exception as e:
-        # If something goes wrong in semantic filtering, log and continue without KB to avoid blocking the user
-        logger.exception("Error while retrieving semantic context: %s", e)
+        logger.exception("Error retrieving KB context: %s", e)
         relevant_context = ""
 
-    # Only include KB section if it returns a text that looks like a KB match
     include_kb = False
-    if isinstance(relevant_context, str) and relevant_context.strip():
-        low = relevant_context.lower()
-        if not (low.startswith("no specific") or low.startswith("error:") or "could not" in low):
-            include_kb = True
+    if relevant_context.strip() and not (
+        relevant_context.lower().startswith("no specific") or
+        relevant_context.lower().startswith("error:") or
+        "could not" in relevant_context.lower()
+    ):
+        include_kb = True
 
-    personalized_system_prompt = SYSTEM_PROMPT + f"""
-    \nThe current user's username is {current_user.username}. Guest is not a name, it's the status of the user.
-    Occasionally respond using this name if appropriate to make the chat experience more personalized.
-    """
+    # 4. Build system prompt
+    personalized_system_prompt = (
+        SYSTEM_PROMPT
+        + f"\nThe current user's username is {current_user.username}. "
+          "Guest is not a name, it's the status of the user. "
+          "Occasionally respond using this name if appropriate."
+    )
 
-    if include_kb:
-        system_message_content = f"{personalized_system_prompt}\n\nKnowledge Base Data:\n{relevant_context}"
-    else:
-        # Keep system prompt short when there's no KB context to save tokens
-        system_message_content = personalized_system_prompt
+    system_message_content = (
+        f"{personalized_system_prompt}\n\nKnowledge Base Data:\n{relevant_context}"
+        if include_kb else personalized_system_prompt
+    )
 
-    # Retrieve recent conversation history for the user (up to MAX_HISTORY_TURNS)
+    # 5. Retrieve recent conversation history
     history_rows = (
         db.query(models.ChatMessage)
         .filter(models.ChatMessage.user_id == current_user.id)
@@ -376,48 +383,37 @@ async def chat_with_bot(
     )
     history_rows.reverse()
 
-    # Build conversation messages for the chat model
     conversation_messages = []
-    # Also collect a plain text version of history for token counting
     history_plain_text_parts = []
+
     for row in history_rows:
-        # Ensure values are strings; guard against None
         user_q = row.user_query or ""
         ai_r = row.ai_response or ""
         conversation_messages.append({"role": "user", "content": user_q})
         conversation_messages.append({"role": "assistant", "content": ai_r})
-        history_plain_text_parts.append(user_q)
-        history_plain_text_parts.append(ai_r)
+        history_plain_text_parts.extend([user_q, ai_r])
 
-    # Build final messages payload for the model
-    messages = [
-        {"role": "system", "content": system_message_content},
-        *conversation_messages,
-        {"role": "user", "content": user_message},
-    ]
+    # 6. Build final messages payload
+    messages = [{"role": "system", "content": system_message_content}]
+    messages.extend(conversation_messages)
+    messages.append({"role": "user", "content": user_message})
 
+    # 7. Call Azure OpenAI
     try:
-        # Call the Azure OpenAI wrapper 
         ai_response = await call_azure_openai_with_backoff(messages)
-
-        # Post-process the model output
         ai_response = strip_markdown(ai_response)
         ai_response = enforce_list_indentation(ai_response, 2)
 
-        # Token counting: combine system + history text + user for accurate pre-call info
+        # 8. Token counting 
         combined_input_for_count = " ".join(
-            [
-                system_message_content,
-                " ".join(history_plain_text_parts),
-                user_message,
-            ]
+            [system_message_content, " ".join(history_plain_text_parts), user_message]
         )
         print("Input token counts:")
         count_number_of_tokens(combined_input_for_count)
         print("\nOutput token counts:")
         count_number_of_tokens(ai_response)
 
-        # Save chat to DB under Guest user, with basic rollback handling
+        # 9. Save chat in DB (guest user)
         chat_log = models.ChatMessage(
             user_id=current_user.id,
             user_query=user_message,
@@ -430,13 +426,16 @@ async def chat_with_bot(
         except Exception:
             logger.exception("DB commit failed, rolling back.")
             db.rollback()
-            # still return the AI response even if logging fails 
-        bot_response = ChatResponse(response=ai_response)
-        return bot_response
+
+        return ChatResponse(response=ai_response)
 
     except HTTPException as e:
-        logger.error("Chat failed with HTTP Error: %s", e.detail if hasattr(e, "detail") else str(e))
+        logger.error("Chat failed with HTTP Error: %s",
+                     getattr(e, "detail", str(e)))
         raise e
     except Exception as e:
-        logger.exception("An unexpected error occurred while processing chat request: %s", e)
-        raise HTTPException(status_code=500, detail="An unexpected error occurred while processing the request.") from e
+        logger.exception("Unexpected error while processing chat request: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail="An unexpected error occurred while processing the request."
+        ) from e
