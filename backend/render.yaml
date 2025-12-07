@@ -1,15 +1,12 @@
 services:
   - type: web
     name: momobot-cg-api
-    env: python
-    pythonVersion: 3.12
+    env: docker
+    dockerfilePath: backend/Dockerfile
     plan: free
     region: oregon
-    rootDir: backend
-    buildCommand: |
-      python -m pip install --upgrade pip setuptools wheel
-      pip install --prefer-binary -r requirements.txt
-    startCommand: python run.py
+    rootDir: .           
+    startCommand: ""    
     autoDeploy: true
     envVars:
       - key: AZURE_OPENAI_ENDPOINT
