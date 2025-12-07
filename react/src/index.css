@@ -689,3 +689,55 @@ h1, h2, h3 {
         font-size: 0.85em;
     }
 }
+
+/* --- Language Switcher Button Styles --- */
+
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px; 
+}
+
+.lang-switcher-button {
+    /* Base Appearance */
+    background-color: var(--mo-mo-dark-blue);
+    color: var(--mtn-yellow);
+    font-weight: 700;
+    text-transform: uppercase; 
+    
+    /* Sizing & Shape */
+    padding: 8px 14px; 
+    border-radius: var(--border-radius-full);
+    border: 2px solid var(--mtn-yellow);
+    
+    /* Interactivity */
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.25s ease-in-out;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.lang-switcher-button:hover {
+    /* Invert colors on hover for a distinct, branded effect */
+    background-color: transparent; 
+    color: var(--mtn-yellow); 
+    border-color: var(--mtn-yellow);
+    transform: translateY(-2px); 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Optional: Make it look slightly different in Dark Mode if you apply dark mode to the Navbar */
+[data-theme='dark'] .lang-switcher-button {
+    background-color: var(--mtn-yellow);
+    color: var(--mo-mo-dark-blue);
+}
+
+[data-theme='dark'] .lang-switcher-button:hover {
+    background-color: var(--mo-mo-dark-blue); 
+    color: var(--mtn-yellow);
+}
+
+.lang-switcher-button span[role="img"] {
+    font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Android Emoji', 'EmojiOne', sans-serif;
+    line-height: 1;
+}
