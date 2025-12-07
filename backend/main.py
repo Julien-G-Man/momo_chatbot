@@ -121,93 +121,64 @@ def strip_markdown(text: str) -> str:
     
     return text.strip()
     
-def enforce_list_indentation(text: str, indent_spaces: int) -> str:
+def enforce_list_indentation(text, indent_spaces: int) -> str:
     """
-    Detects and enforces a consistent indentation and list marker for
-    both bulleted and numbered lists in a block of text.
+    Detects and enforces consistent indentation and list markers for
+    bulleted and numbered lists in a block of text.
 
     Args:
-        text (str): The text output from the LLM.
+        text (str or list): The text output from the LLM, can be a string or nested list.
         indent_spaces (int): The number of spaces to use for indentation.
 
     Returns:
         str: The text with enforced indentation and clean markers.
     """
     indent = ' ' * indent_spaces
-    lines = text.splitlines()
+
+    # Flatten nested lists if necessary
+    def flatten_lines(lines):
+        for item in lines:
+            if isinstance(item, list):
+                yield from flatten_lines(item)
+            else:
+                yield str(item)
+
+    if isinstance(text, list):
+        lines = list(flatten_lines(text))
+    else:
+        lines = text.splitlines()
+
     new_lines = []
-    
-    # Pattern detects lines starting with *, -, or 1.
-    list_marker_pattern = re.compile(r'^\s*([*-]|\d+\.\s*)\s*(.*)$')
+    list_marker_pattern = re.compile(r'^\s*([*-]|\d+\.)\s*(.*)$')
     numbered_list_counter = 0
 
     for line in lines:
-        # check for command indicators and skip list processing
-        if '->' in line or '→' in line or '=>' in line:
-            new_lines.append(line)
+        stripped = line.strip()
+        # Skip lines with command indicators
+        if '->' in stripped or '→' in stripped or '=>' in stripped:
+            new_lines.append(stripped)
             numbered_list_counter = 0
             continue
-        
-        match = list_marker_pattern.match(line)
-        
+
+        match = list_marker_pattern.match(stripped)
         if match:
-            # Get the list marker and the content
             marker = match.group(1).strip()
             content = match.group(2).strip()
-
             if marker in ['*', '-']:
-                # Handle bulleted lists
-                new_line = f"{indent}• {content}"
-                numbered_list_counter = 0 
+                new_lines.append(f"{indent}• {content}")
+                numbered_list_counter = 0
             else:
                 if numbered_list_counter == 0:
                     numbered_list_counter = 1
                 new_lines.append(f"{indent}{numbered_list_counter}. {content}")
                 numbered_list_counter += 1
-
         else:
-            # plain line resets numbering
-            new_lines.append(line)
-            numbered_list_counter = 0 
-            continue
-
-        new_lines.append(new_line)
+            # Plain line resets numbering
+            new_lines.append(stripped)
+            numbered_list_counter = 0
 
     return '\n'.join(new_lines)
 
-
-def render_structured_list(llm_output_json_string: str) -> str:
-    """
-    Parses the guaranteed JSON output from the LLM and renders it
-    into a clean, text-based format with enforced indentation and bullets.
-    """
-    try:
-        data = json.loads(llm_output_json_string)
-        
-        preamble = data.get('preamble', '')
-        list_items = data.get('list_items', [])
-        
-    except (json.JSONDecodeError, AttributeError, KeyError) as e:
-        print(f"Error: Failed to parse LLM output as required JSON: {e}")
-        return llm_output_json_string.strip()
-
-    # Define the exact formatting parameters
-    indent_spaces = 2
-    INDENT = ' ' * indent_spaces
-    BULLET = '• '
-    
-    output_lines = []
-    
-    # Add the introductory text
-    if preamble:
-        output_lines.append(preamble)
-        
-    # Process and format the list items
-    for item in list_items:
-        formatted_item = f"{INDENT}{BULLET}{item}"
-        output_lines.append(formatted_item)
-        
-    return '\n'.join(output_lines)
 
 # --- Utility Functions ---
 async def call_azure_openai_with_backoff(

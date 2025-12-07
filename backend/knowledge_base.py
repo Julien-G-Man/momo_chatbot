@@ -18,9 +18,8 @@ AZURE_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 AZURE_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 AZURE_API_VERSION = "2025-01-01-preview"
 
-
 MOMO_ADVANCE = f"""
-1. What is MoMo Advance?
+What is MoMo Advance?
 MoMo Advance is a financial facility that allows MoMo subscribers to carry out transactions from their MoMo wallet even when their balance is zero or insufficient.
 It can be used for transactions such as:
  • Buying airtime or bundles
@@ -171,11 +170,72 @@ Interpretation Guidelines:
  
 """
 
+XTRA_CASH = f"""
+MoMo XtraCash – Loan Service Overview
+❖ Description :
+MoMo XtraCash is a short-term loan service available to Mobile Money (MoMo) subscribers in Congo, offered in partnership with UBA Congo. 
+It allows users to borrow between 1,000 and 100,000 FCFA and repay later via their MoMo account.
+
+❖ Eligibility Criteria:
+• Must be an active Mobile Money user.
+• Must have been a Mobile Money customer for at least 6 months.
+• Must meet KYC requirements and pass eligibility checks.
+
+❖ Loan Types and Terms:
+MoMo XtraCash offers three types of short-term loans: 7-day, 28-day, and daily loans. 
+Each loan type has distinct access fees, penalties, interest rates, and repayment deadlines:
+
+1. 7-Day Loan
+• Access fee: 11% of the loan amount
+• Penalty fee (if overdue): 11%
+• Interest rate: 0.35% per week
+• Repayment deadline: 7 days from disbursement
+
+2. 28-Day Loan
+• Access fee: 12.5% of the loan amount
+• Penalty fee (if overdue): 11%
+• Interest rate: 0.35% per week
+• Repayment deadline: 28 days (4 weeks) from disbursement
+
+3. Daily Loan
+• Access fee: 12.5% of the loan amount
+• Penalty fee (if overdue): 11%
+• Interest rate: 0.05%
+• Repayment deadline: 1 day (maximum 30 days allowed)
+
+❖ USSD Code Access: 
+Dial *105*42# to access XtraCash services. Menu options include:
+• Obtain a loan
+• Repay a loan
+• Check loan balance
+• View loan history
+• Unsubscribe
+• About XtraCash
+
+❖ Loan Example:
+• Amount borrowed: 2,500 FCFA
+• Fees: 312 FCFA (12.5% access fee), 1 FCFA interest
+• Total repayment: 2,813 FCFA
+• Duration: 1 day
+
+❖ Repayment Process:
+• Dial *105*42# then select option 2.
+• Enter the repayment amount when prompted.
+• Automatic debit occurs on the due date if not repaid manually.
+
+❖ Loan Balance Inquiry:
+• Dial *105*42# then select option 3.
+
+❖ Loan History (Mini Historique):
+• Dial *105*42# then select option 4.
+
+"""
 
 KNOWLEDGE_BASE = f"""
 MOMO SERVICES:
 1. MOMO ADVANCE\n{MOMO_ADVANCE}\n
-2. ECW TRANSACTIONS DETAILS\n{ECW_TRANSACTIONS_DETAILS} 
+2. ECW TRANSACTIONS DETAILS\n{ECW_TRANSACTIONS_DETAILS}\n
+3. MOMO XTRA CASH\n{XTRA_CASH}
 """
 CURRENT_TIME = datetime.now().strftime("%H:%M:%S")
 CURRENT_DATE = datetime.now().strftime("%d %B %Y")
@@ -212,6 +272,7 @@ KB_STATUS = {"ready": False, "last_error": None, "keys": []}
 INITIAL_KB_CHUNKS = {
     'GENERAL_INFO': MOMO_ADVANCE.strip(),
     'ECW_DETAILS': ECW_TRANSACTIONS_DETAILS.strip(),
+    'XTRA_CASH': XTRA_CASH.strip()
 }
 
 
@@ -222,7 +283,6 @@ STOP_WORDS = {
     # French
     "le","la","les","un","une","des","et","ou","de","du","pour","par","avec","dans",
 }
-# Add domain-specific stopwords if needed, e.g. "momo" maybe keep or remove depending on usefulness.
 
 SYNONYMS = {
     # french -> english and close variants
@@ -233,7 +293,8 @@ SYNONYMS = {
     "avance": ["loan","advance","pret"],
     "recharger": ["topup","recharge"],
     "code": ["pin","code"],
-    # add more domain synonyms as you find misses
+    "loan": ["xtracash", "xtra cash", "pret"],
+    
 }
 
 # Tuning
@@ -326,6 +387,7 @@ def get_keyword_filtered_context(
         return ""
 
     keywords = extract_keywords(user_query)
+    print(keywords)
     if not keywords:
         return ""
 
@@ -336,7 +398,7 @@ def get_keyword_filtered_context(
         if kw in inverted_index:
             for k in inverted_index[kw]:
                 score[k] += 2  # exact token match heavier weight
-        # also check substring fallback across chunks (cheap for small KB)
+        # also check substring fallback across chunks 
         else:
             lkw = kw
             for k, text in kb_chunks.items():

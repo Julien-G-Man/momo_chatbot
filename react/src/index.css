@@ -1,22 +1,62 @@
-/* --- Global Styles & Variables (Momo Palette) --- */
-:root {
-    /* Variables from styles.css */
-    --mtn-yellow: #ffcc00; /* MTN Primary Yellow */
-    --mtn-orange: #ff9900; /* Used in gradients, a warmer yellow/orange */
-    --mo-mo-teal: #016278; /* Dark Teal/Blue from the MoMo image */
-    --mo-mo-dark-blue: #092c4c; /* Very dark blue for text/backgrounds */
-    --text-dark: #333;
-    --text-light: #fff;
-    --background-light: #f4f4f4;
-    --border-radius-sm: 8px;
-    --border-radius-lg: 12px;
-    --font-family: 'Roboto', sans-serif;
+/* ---------------------------------------------------- */
+/* --- 1. GLOBAL STYLES & THEME VARIABLES (LIGHT MODE) --- */
+/* ---------------------------------------------------- */
 
-    /* New Gradient for Hero Section */
+:root {
+    /* MTN Palette */
+    --mtn-yellow: #ffcc00; 
+    --mtn-orange: #ff9900;
+    --mo-mo-teal: #016278; 
+    --mo-mo-dark-blue: #092c4c;
+    
+    /* Theme Colors (Light Mode Base) */
+    --bg-primary: #f8f9fa; /* Lighter background for main content */
+    --bg-secondary: #ffffff; /* White background for cards, bubbles, input */
+    --text-default: #343a40;
+    --text-muted: #6c757d;
+    --border-color: #e9ecef;
+    --shadow-subtle: 0 4px 12px rgba(0, 0, 0, 0.05);
+    
+    /* Chat Specific Colors */
+    --chat-user-bg: var(--mo-mo-teal); 
+    --chat-user-text: var(--bg-secondary);
+    --chat-bot-bg: var(--bg-secondary);
+    --chat-bot-border: var(--border-color);
+    --chat-bot-text: var(--text-default);
+    
+    /* General Styles */
+    --border-radius-sm: 8px;
+    --border-radius-lg: 16px; /* Increased for modern rounded look */
+    --border-radius-full: 9999px;
+    --font-family: 'Inter', 'Roboto', sans-serif; /* Prioritized Inter/Roboto for clean look */
+
+    /* Gradients */
     --hero-gradient: linear-gradient(135deg, var(--mo-mo-teal) 0%, var(--mo-mo-dark-blue) 100%);
-    /* New Gradient for CTA Block */
     --cta-gradient: linear-gradient(45deg, var(--mtn-yellow) 0%, var(--mtn-orange) 100%);
 }
+
+/* -------------------------------------- */
+/* --- 2. DARK MODE THEME OVERRIDES --- */
+/* -------------------------------------- */
+[data-theme='dark'] {
+    --bg-primary: #1e1e1e; /* Dark background */
+    --bg-secondary: #2c2c2c; /* Slightly lighter dark for components */
+    --text-default: #ffffff;
+    --text-muted: #a0a0a0;
+    --border-color: #3a3a3a;
+    --shadow-subtle: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+    /* Chat Specific Colors */
+    --chat-user-bg: var(--mtn-yellow); 
+    --chat-user-text: var(--mo-mo-dark-blue);
+    --chat-bot-bg: var(--bg-secondary);
+    --chat-bot-border: var(--border-color);
+    --chat-bot-text: var(--text-default);
+}
+
+/* -------------------------------------- */
+/* --- 3. BASE STYLES & TYPOGRAPHY --- */
+/* -------------------------------------- */
 
 * {
     box-sizing: border-box;
@@ -31,38 +71,38 @@ html, body {
 
 body {
     font-family: var(--font-family);
-    color: var(--text-dark);
+    color: var(--text-default);
     line-height: 1.6;
     overflow-x: hidden;
-    background-color: var(--background-light);
+    background-color: var(--bg-primary); 
+    transition: background-color 0.3s, color 0.3s; /* Smooth theme transition */
 }
 
-/* --- LANDING PAGE STYLES (from styles.css) --- */
-
-.landing-wrapper {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+h1, h2, h3 {
+    line-height: 1.1;
+    font-weight: 700;
 }
 
 /* --- Utility Classes --- */
 .section-padded {
-    padding: 80px 5%;
+    padding: 100px 5%; /* Increased vertical padding for modern spaciousness */
 }
 
 .momo-gradient-bg {
     background: var(--hero-gradient);
-    color: var(--text-light);
+    color: var(--text-light); /* Still needs to be defined for older code, should be white */
+    color: white; 
 }
 
 .momo-dark-bg {
     background-color: var(--mo-mo-dark-blue);
-    color: var(--text-light);
+    color: var(--text-light); /* Still needs to be defined for older code, should be white */
+    color: white;
 }
 
 .section-subtitle {
     font-size: 1.2em;
-    color: #666;
+    color: var(--text-muted);
     margin-bottom: 50px;
     max-width: 800px;
     margin-left: auto;
@@ -70,7 +110,42 @@ body {
     line-height: 1.5;
 }
 
-/* --- Header / Navbar --- */
+/* --- Button Styling --- */
+.cta-button {
+    text-decoration: none;
+    padding: 18px 30px;
+    border-radius: var(--border-radius-full); /* Pill shape */
+    font-weight: 700;
+    font-size: 1.15em;
+    text-align: center;
+    display: inline-block;
+    transition: all 0.3s ease-in-out;
+    cursor: pointer;
+    border: none;
+}
+
+.cta-button.primary {
+    background: var(--cta-gradient); /* Use gradient for a richer look */
+    color: var(--mo-mo-dark-blue);
+    box-shadow: 0 5px 20px rgba(255, 153, 0, 0.5);
+}
+
+.cta-button.primary:hover {
+    box-shadow: 0 10px 30px rgba(255, 153, 0, 0.7);
+    transform: translateY(-2px);
+}
+
+/* -------------------------------------- */
+/* --- 4. LANDING PAGE STYLES --- */
+/* -------------------------------------- */
+
+.landing-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Header / Navbar */
 .navbar {
     background-color: var(--mo-mo-dark-blue);
     height: 70px;
@@ -81,15 +156,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-    font-size: 1.5em;
-    font-weight: 700;
-    color: var(--mtn-yellow);
+    box-shadow: var(--shadow-subtle);
 }
 
 .logo a {
@@ -100,27 +167,20 @@ body {
 }
 
 .logo-icon {
-    /* Using placeholder style for the yellow icon in the React component */
     height: 40px; 
-    background-color: var(--mtn-yellow);
     display: inline-block;
-    padding: 5px;
-    border-radius: 5px;
+    border-radius: 0; 
     margin-right: 10px;
-    color: var(--mo-mo-dark-blue);
-    font-size: 1.5rem;
-    line-height: 30px;
-    text-align: center;
 }
 
 .menu-icon {
-    color: var(--text-light);
+    color: white;
     font-size: 1.8em;
     cursor: pointer;
     display: none; 
 }
 
-/* --- Hero Section --- */
+/* Hero Section */
 .hero-section {
     position: relative;
     padding: 100px 5%;
@@ -149,7 +209,7 @@ body {
 }
 
 .hero-text-panel h1 {
-    font-size: 3.5em;
+    font-size: clamp(2.5em, 5vw, 4em); /* Use clamp for better scaling */
     font-weight: 700;
     margin-bottom: 25px;
     line-height: 1.1;
@@ -160,7 +220,7 @@ body {
     font-size: 1.3em;
     line-height: 1.6;
     margin-bottom: 40px;
-    color: var(--text-light);
+    color: white;
     opacity: 0.9;
 }
 
@@ -176,13 +236,13 @@ body {
     max-width: 100%;
     height: auto;
     display: block;
-    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+    filter: drop-shadow(0 10px 30px rgba(0,0,0,0.5));
 }
 
-/* --- Feature Highlights Section --- */
+/* Feature Highlights Section */
 .feature-highlights {
     text-align: center;
-    background-color: var(--background-light);
+    background-color: var(--bg-primary);
 }
 
 .feature-highlights h2 {
@@ -199,10 +259,11 @@ body {
 }
 
 .feature-item {
-    background-color: var(--text-light);
+    background-color: var(--bg-secondary);
     padding: 35px;
     border-radius: var(--border-radius-lg);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-subtle);
+    border: 1px solid var(--border-color);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     text-align: center;
 }
@@ -215,7 +276,7 @@ body {
 .feature-icon-wrapper {
     height: 80px;
     width: 80px;
-    background-color: rgba(255, 204, 0, 0.1); /* Using hardcoded value for transparency */
+    background-color: rgba(1, 98, 120, 0.1); 
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -237,11 +298,11 @@ body {
 
 .feature-item p {
     font-size: 1em;
-    color: #555;
+    color: var(--text-default);
     line-height: 1.6;
 }
 
-/* --- Call to Action Block --- */
+/* Call to Action Block */
 .call-to-action-block {
     text-align: center;
     padding: 80px 5%;
@@ -276,7 +337,7 @@ body {
     font-size: 1.2em;
     line-height: 1.6;
     margin-bottom: 40px;
-    color: var(--text-light);
+    color: white;
     opacity: 0.9;
 }
 
@@ -292,36 +353,11 @@ body {
     max-width: 100%;
     height: auto;
     display: block;
+    border-radius: var(--border-radius-lg);
     filter: drop-shadow(0 8px 15px rgba(0,0,0,0.2));
 }
 
-/* --- Button Styling --- */
-.cta-button {
-    text-decoration: none;
-    padding: 18px 30px;
-    border-radius: 50px; 
-    font-weight: 700;
-    font-size: 1.15em;
-    text-align: center;
-    display: inline-block;
-    transition: all 0.3s ease-in-out;
-    cursor: pointer;
-    border: none;
-}
-
-.cta-button.primary {
-    background-color: var(--mtn-yellow); 
-    color: var(--mo-mo-dark-blue);
-    box-shadow: 0 5px 15px rgba(255, 204, 0, 0.4);
-}
-
-.cta-button.primary:hover {
-    background-color: var(--mtn-orange);
-    box-shadow: 0 8px 20px rgba(255, 153, 0, 0.5);
-    transform: translateY(-2px);
-}
-
-/* --- Footer --- */
+/* Footer */
 .momo-footer {
     background-color: var(--mo-mo-dark-blue);
     color: #a0a0a0;
@@ -329,7 +365,7 @@ body {
     text-align: center;
     font-size: 0.9em;
     width: 100%;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     margin-top: auto;
 }
 
@@ -349,177 +385,101 @@ body {
     text-decoration: underline;
 }
 
+/* -------------------------------------- */
+/* --- 5. CHAT PAGE STYLES --- */
+/* -------------------------------------- */
 
-/* --- Mobile Responsiveness (Landing Page) --- */
-@media (max-width: 992px) {
-    .hero-content, .cta-content {
-        flex-direction: column;
-        text-align: center;
-    }
-    .hero-text-panel, .cta-text {
-        max-width: 100%;
-        text-align: center;
-    }
-    .hero-illustration, .cta-image img {
-        max-width: 80%;
-    }
-    .hero-text-panel h1 {
-        font-size: 3em;
-    }
-    .hero-text-panel p {
-        font-size: 1.1em;
-    }
-    .section-subtitle {
-        font-size: 1.1em;
-    }
-    .feature-grid {
-        grid-template-columns: 1fr;
-    }
-    .menu-icon {
-        display: block;
-    }
-    .navbar .logo h1 {
-        font-size: 1.2em;
-    }
-}
-
-@media (max-width: 600px) {
-    .hero-section, .section-padded {
-        padding: 60px 5%;
-    }
-    .hero-text-panel h1 {
-        font-size: 2.2em;
-    }
-    .hero-text-panel p {
-        font-size: 1em;
-    }
-    .cta-button.large {
-        padding: 15px 20px;
-        font-size: 1em;
-    }
-    .feature-highlights h2, .call-to-action-block h2 {
-        font-size: 2em;
-    }
-    .section-subtitle {
-        font-size: 0.95em;
-    }
-    .feature-item {
-        padding: 25px;
-    }
-}
-
-/* --- CHAT PAGE STYLES --- */
-
-/* Ensure the chat uses the full vertical space */
 .chat-app-container {
     height: 100vh; 
     width: 100vw;
     display: flex;
     flex-direction: column;
-    background-color: var(--background-light); 
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: var(--bg-primary); 
 }
 
-/* --- Header Styling (MTN MoMo Teal) --- */
-.chat-header {
-    background-color: var(--mo-mo-teal); /* Dark Teal Bar */
-    height: 60px;
-    padding: 0 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+/* Chat Header */
+.navbar {
     flex-shrink: 0;
 }
 
-.chat-header .logo-icon {
-    height: 30px;
-    background-color: var(--mtn-yellow);
-    padding: 5px;
-    border-radius: 5px;
-    margin-right: 10px;
-    color: var(--mo-mo-teal);
-    font-size: 1.2rem;
-    line-height: 20px;
-    text-align: center;
-}
-
-.logout-link, .home-link {
-    color: var(--text-light);
+.home-link {
+    color: var(--mtn-yellow);
     text-decoration: none;
     font-weight: 500;
-    opacity: 0.8;
-    transition: opacity 0.2s;
+    padding: 8px 15px;
+    border: 1px solid var(--mtn-yellow);
+    border-radius: var(--border-radius-sm);
+    transition: background-color 0.2s;
 }
 
-.logout-link:hover, .home-link:hover {
-    opacity: 1;
-    color: var(--mtn-yellow);
+.home-link:hover {
+    background-color: var(--mtn-yellow);
+    color: var(--mo-mo-dark-blue);
 }
 
-/* --- Main Chat Area --- */
+/* Main Chat Area */
 .chat-main {
     flex-grow: 1; 
     overflow-y: auto;
-    background-color: var(--background-light);
+    background-color: var(--bg-primary);
+    padding-bottom: 20px; 
 }
 
-/* --- Chat Messages --- */
+/* Chat Messages */
 .chat-history {
     display: flex;
     flex-direction: column;
-    max-width: 1200px;
-    width: 100%;
+    max-width: 900px; 
+    width: 95%;
     margin: 0 auto;
-    padding: 20px;
+    padding: 20px 0;
 }
 
 .message {
     display: flex;
-    margin-bottom: 15px;
-    max-width: 80% 700px;
-    width: 90%;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 65%; /* Constrained for mobile/desktop readability */
+    width: auto;
+    margin-bottom: 12px;
 }
 
 .message-text {
-    padding: 12px 18px;
-    border-radius: 20px;
-    line-height: 1.4;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 14px 20px;
+    line-height: 1.5;
+    border-radius: var(--border-radius-lg);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* Subtle shadow */
+    font-size: 1.05em;
+    white-space: pre-wrap; 
 }
 
-/* User Message (Aligned Right, Teal Background) */
+/* User Message (Aligned Right, Teal/Accent Background) */
 .user-message {
     margin-left: auto; 
-    margin-right: auto;
     justify-content: flex-end;
 }
 
 .user-message .message-text {
-    background-color: var(--mo-mo-teal);
-    color: var(--text-light);
-    border-top-right-radius: 5px; 
-    border-radius: 20px;
+    background-color: var(--chat-user-bg);
+    color: var(--chat-user-text);
+    /* Specific bubble corners for modern look */
+    border-bottom-right-radius: 5px; 
 }
 
-/* Bot Message (Aligned Left, Light Background) */
+/* Bot Message (Aligned Left, Light/Secondary Background) */
 .bot-message {
     margin-right: auto;
     justify-content: flex-start;
 }
 
 .bot-message .message-text {
-    background-color: var(--text-light);
-    color: var(--text-dark);
-    border: 1px solid #ddd;
+    background-color: var(--chat-bot-bg);
+    color: var(--chat-bot-text);
+    border: 1px solid var(--chat-bot-border);
+    /* Reintroducing a distinct border/accent for the bot message */
+    border-left: 5px solid var(--mtn-yellow); /* Prominent Yellow Line */
     border-bottom-left-radius: 5px; 
-    border-top: 3px solid var(--mtn-yellow); 
-    border-radius: 5px 20px 20px 5px;
 }
 
-/* --- Typing Indicator --- */
+/* Typing Indicator */
 .typing-indicator {
     display: flex;
     align-items: center;
@@ -527,9 +487,9 @@ body {
     margin-left: 5px;
     margin-bottom: 10px;
     padding: 10px 18px;
-    background-color: var(--text-light);
+    background-color: var(--bg-secondary);
     border-radius: 20px;
-    max-width: 100px;
+    max-width: 110px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
@@ -560,66 +520,172 @@ body {
     }
 }
 
-/* --- Input Area --- */
+/* --- Input Area Wrapper (FIXED AT BOTTOM) --- */
+.chat-input-area-wrapper {
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    z-index: 50;
+    background-color: var(--bg-primary); 
+    padding: 10px 5% 20px; 
+    box-shadow: none;
+    flex-shrink: 0;
+}
+
+/* Quick Actions/KB Suggestions (NEW SECTION) */
+.quick-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    max-width: 900px;
+    margin: 0 auto 15px;
+    padding: 0 10px;
+    flex-wrap: wrap;
+}
+
+.quick-action-button {
+    background-color: var(--bg-secondary);
+    color: var(--text-default);
+    border: 1px solid var(--border-color);
+    padding: 20px 20px;
+    border-radius: var(--border-radius-full);
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.quick-action-button:hover {
+    background-color: var(--bg-primary);
+    color: var(--text-default);
+}
+
+/* Actual Input Field Form */
 .chat-input-area {
     display: flex;
-    padding: 15px 20px;
-    background-color: var(--text-light);
-    border-top: 1px solid #eee;
-    flex-shrink: 0;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 5px; 
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-full);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .chat-input-area input {
     flex-grow: 1;
-    padding: 10px 15px;
-    font-size: 1em;
-    border: 1px solid #ccc;
-    border-radius: 50px;
-    margin-right: 10px;
-    transition: border-color 0.2s;
+    border: none;
+    background-color: transparent;
+    border-radius: var(--border-radius-full);
+    font-size: 1.1em;
+    padding: 10px 20px 10px 15px;
+    color: var(--text-default);
 }
 
 .chat-input-area input:focus {
     outline: none;
-    border-color: var(--mtn-yellow);
-    box-shadow: 0 0 0 2px rgba(255, 204, 0, 0.2);
+    border-color: transparent;
 }
 
 .chat-input-area .cta-button {
-    /* Send button uses the primary MoMo style */
-    width: 50px;
-    height: 50px;
+    background-color: var(--mo-mo-teal); 
+    box-shadow: none;
+    width: 45px;
+    height: 45px;
     padding: 0;
+    margin: 0;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-shrink: 0;
-    /* Inherits styling from .cta-button.primary in styles.css */
 }
 
 .chat-input-area .send-icon {
-    font-size: 1.2em;
-    margin-left: 3px; 
-    color: var(--text-light); /* Button text is white on yellow CTA */
+    font-size: 1.4em;
+    margin-left: 2px; 
+    color: var(--mtn-yellow); 
 }
 
-/* --- Mobile Responsiveness (Chat Page) --- */
-@media (max-width: 600px) {
-    .chat-history {
-        padding: 10px;
+/* -------------------------------------- */
+/* --- 6. MOBILE RESPONSIVENESS --- */
+/* -------------------------------------- */
+
+@media (max-width: 992px) {
+    /* Landing Page */
+    .hero-content, .cta-content {
+        flex-direction: column;
+        text-align: center;
     }
+    .hero-text-panel, .cta-text {
+        max-width: 100%;
+        text-align: center;
+    }
+    .hero-illustration, .cta-image img {
+        max-width: 80%;
+    }
+    .hero-text-panel h1 {
+        font-size: 3em;
+    }
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+    .menu-icon {
+        display: block;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Chat Page Adjustments */
     .message {
-        max-width: 90%;
+        max-width: 85%;
+    }
+    .chat-input-area-wrapper {
+        padding: 10px 3% 15px; 
     }
     .chat-input-area {
-        padding: 10px;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 600px) {
+    /* General Mobile */
+    .hero-section, .section-padded {
+        padding: 60px 5%;
+    }
+    .hero-text-panel h1 {
+        font-size: 2.2em;
+    }
+    .cta-button.large {
+        padding: 15px 20px;
+        font-size: 1em;
+    }
+    .feature-highlights h2, .call-to-action-block h2 {
+        font-size: 2em;
+    }
+
+    /* Chat Page Small Mobile */
+    .message {
+        max-width: 95%;
     }
     .chat-input-area input {
-        padding: 8px 12px;
+        padding: 10px 15px;
+        font-size: 1em;
     }
     .chat-input-area .cta-button {
-        width: 45px;
-        height: 45px;
+        width: 40px;
+        height: 40px;
+    }
+    .chat-input-area .send-icon {
+        font-size: 1.2em;
+    }
+    .quick-actions {
+        justify-content: space-around;
+    }
+    .quick-action-button {
+        flex-grow: 1;
+        max-width: 48%; /* Allows two per line */
+        font-size: 0.85em;
     }
 }
