@@ -403,8 +403,8 @@ def get_keyword_filtered_context(
         return ""
 
     keywords = extract_keywords(user_query)
-    print(f"User input: {user_query}")
-    print(f"Filtered Key words: {keywords}")
+    print(f"\nUser message: {user_query}")
+    print(f"\nFiltered Key words: {keywords}")
     if not keywords:
         return ""
 

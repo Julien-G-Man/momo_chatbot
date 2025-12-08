@@ -10,6 +10,7 @@ import models, schemas
 from schemas import ChatRequest, ChatResponse
 from typing import Optional, Union, List, Dict, Any
 from datetime import datetime
+from sqlalchemy.exc import IntegrityError
 from dotenv import load_dotenv
 from uuid import uuid4
 from fastapi import FastAPI, APIRouter, HTTPException, status, Depends
@@ -68,6 +69,8 @@ INVERTED_INDEX = build_inverted_index(INITIAL_KB_CHUNKS)
 async def startup_event():
     print("Initializing database tables...")
     create_database_tables()
+    db = next(get_db())
+    ensure_guest_user(db)
     print("Database tables initialized.")
     print("Inverted index built.")
    
@@ -76,6 +79,34 @@ def read_root():
     """Simple health check endpoint."""
     return {"status": "ok", "message": "Chatbot API is running!"}
 
+def ensure_guest_user(db: Session, guest_id: int = 1, guest_username: str = "Guest"):
+    # try modern db.get, fallback to query
+    try:
+        user = db.get(models.User, guest_id)
+    except Exception:
+        user = db.query(models.User).filter_by(id=guest_id).first()
+
+    if user:
+        return user
+
+    user = models.User(
+        id=guest_id,
+        username=guest_username,
+        # add any required fields your User model needs, e.g. email=None
+        created_at = datetime.utcnow() if hasattr(models.User, 'created_at') else None
+    )
+    try:
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        print("Guest user created with ID 1")
+    except IntegrityError:
+        db.rollback()
+        try:
+            user = db.query(models.User).filter_by(id=guest_id).first()
+        except Exception:
+            user = None
+    return user
 
 MODEL_FOR_TOKEN_COUNT = "gpt-4o-mini"
 
@@ -380,6 +411,7 @@ async def chat_with_bot(
         ai_response = await call_azure_openai_with_backoff(messages)
         ai_response = strip_markdown(ai_response)
         ai_response = enforce_list_indentation(ai_response, 4)
+        print(f"\nBot Response: {ai_response}")
 
         combined_input_for_count = " ".join(
             [system_message_content, " ".join(history_plain_text_parts), user_message]
@@ -406,10 +438,17 @@ async def chat_with_bot(
         try:
             db.commit()
             db.refresh(chat_log)
-        except Exception:
-            logger.exception("DB commit failed, rolling back.")
+        except IntegrityError as e:
             db.rollback()
-
+            ensure_guest_user(db, guest_id=current_user.id, guest_username=current_user.username)
+            db.add(chat_log)
+            try:
+                db.commit()
+                db.refresh(chat_log)
+            except Exception:
+                db.rollback()
+                logger.exception("Failed to save chat log even after creating guest user.")
+          
         return ChatResponse(response=ai_response)
 
     except HTTPException as e:

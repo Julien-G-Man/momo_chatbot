@@ -75,15 +75,15 @@ const languageData = {
 
 
 function LandingPage() {
-    // 1. Language State: Initialize to French (fr)
+    // Language State: Initialize to French (fr)
     const [language, setLanguage] = useState('fr'); 
     
-    // 2. Handler function to switch language
+    // Handler function to switch language
     const toggleLanguage = () => {
         setLanguage(prevLang => prevLang === 'fr' ? 'en' : 'fr');
     };
 
-    // 3. Current translation object based on state
+    // Current translation object based on state
     const t = languageData[language];
 
     return (
@@ -115,7 +115,7 @@ function LandingPage() {
                 <Link to="/chat" className="cta-button primary large">{t.ctaButton}</Link>
             </div>
             <div className="hero-image-panel">
-                <img src={heroIllustration} alt="Illustration IA MoMo-Bot" className="hero-illustration" />
+                <img src={heroIllustration} alt="MoMo-Bot AI Illustration " className="hero-illustration" />
             </div>
             </div>
         </section>
@@ -178,7 +178,7 @@ function LandingPage() {
                 <Link to="/chat" className="cta-button primary large">{t.ctaBlockButton}</Link>
             </div>
             <div className="cta-image">
-                <img src={ctaImage} alt="Illustration Collaboration d'équipe" />
+                <img src={ctaImage} alt="Team Illustration " />
             </div>
             </div>
         </section>
