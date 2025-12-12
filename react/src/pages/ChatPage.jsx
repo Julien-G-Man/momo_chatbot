@@ -2,66 +2,31 @@ import React, { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import logoImage from "../assets/logo.png";
 
-// This is used ONLY by Vercel for direct calls
 const BACKEND_BASE_URL = import.meta.env.VITE_BASE_API_URL || "http://localhost:8000";
-
-// Define the Netlify Function endpoint.
-const NETLIFY_FUNCTION_URL = '/.netlify/functions/chat-proxy';
-
-// Determine the final API URL for the fetch call.
-// This checks if the app is hosted on Netlify (indicated by the presence of a specific ENV variable).
-const IS_NETLIFY_DEPLOY = import.meta.env.VITE_IS_NETLIFY === 'true';
-
-const FINAL_API_ENDPOINT = IS_NETLIFY_DEPLOY
-    ? NETLIFY_FUNCTION_URL
-    : `${BACKEND_BASE_URL}/chat`;
-
+const API_URL = `${BACKEND_BASE_URL}/chat`;
 console.log("Chat API URL:", API_URL);
 
-// Key for storing data in the browser's local storage
-const STORAGE_KEY_SESSION = 'momoChatSessionId';
-const STORAGE_KEY_MESSAGES = 'momoChatHistory';
-const WELCOME_MESSAGE = { id: 1, text: "Yello Charismatique! Comment puis-je vous assister avec les services MTN MoMo aujourd'hui?", sender: "bot" };
-
 function ChatPage() {
-    const [sessionId, setSessionId] = useState(null);
-    const [messages, setMessages] = useState([WELCOME_MESSAGE]);
+    const [messages, setMessages] = useState([
+        { id: 1, text: "Yello Charismatique! Comment puis-je vous assister avec les services MTN MoMo aujourd'hui?", sender: "bot" },
+    ]);
     const [inputText, setInputText] = useState("");
     const [showQuickActions, setShowQuickActions] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const chatHistoryRef = useRef(null);
 
-    // 1. Session and History Initialization
     useEffect(() => {
-        const storedSessionId = localStorage.getItem(STORAGE_KEY_SESSION);
-        const storedMessages = JSON.parse(localStorage.getItem(STORAGE_KEY_MESSAGES));
-
-        if (storedSessionId && storedMessages && storedMessages.length > 0) {
-            setSessionId(storedSessionId);
-            setMessages(storedMessages);
-        } else {
-            const newSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-            localStorage.setItem(STORAGE_KEY_SESSION, newSessionId);
-            setSessionId(newSessionId);
-            setMessages([WELCOME_MESSAGE]);
-        }
-    }, []);
-
-    // 2. History Persistence and Scrolling
-    useEffect(() => {
-        localStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(messages));
+        // Scroll to the latest message whenever messages change
         chatHistoryRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
     }, [messages]);
 
-
-    // 3. Message Submission 
     const handleSendMessage = async (e) => {
         e.preventDefault();
         const text = inputText.trim();
-        if (isLoading || text === "" || !sessionId) return;
+        if (isLoading || text === "") return;
 
         if (showQuickActions) {
-            setShowQuickActions(false);
+          setShowQuickActions(false);
         }
 
         const newUserMessage = { id: Date.now(), text, sender: "user" };
@@ -69,16 +34,11 @@ function ChatPage() {
         setInputText("");
         setIsLoading(true);
 
-        const payload = {
-            message: text,
-            session_id: sessionId, 
-        };
-
         try {
-            const response = await fetch(FINAL_API_ENDPOINT, { // Use the determined endpoint
+            const response = await fetch(API_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
+                body: JSON.stringify({ message: text }),
             });
 
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
@@ -90,14 +50,14 @@ function ChatPage() {
             setMessages((prev) => [...prev, newBotMessage]);
         } catch (error) {
             console.error("API Connection Error:", error);
-            const errorMessage = { id: Date.now() + 2, text: "Connection error. Please try again.", sender: "bot" };
+            const errorMessage = { id: Date.now() + 2, text: "Connection error. Please check your FastAPI server.", sender: "bot" };
             setMessages((prev) => [...prev, errorMessage]);
         } finally {
             setIsLoading(false);
         }
     };
     
-    // Handler for quick actions
+    // Handler for quick actions (to populate the input field)
     const handleQuickAction = (actionText) => {
         setInputText(actionText);
     };
@@ -110,11 +70,6 @@ function ChatPage() {
             </div>
         );
     };
-
-    // Show a loading screen until the session ID is initialized
-    if (!sessionId) {
-        return <div className="chat-app-container loading-screen">Chargement de la session...</div>;
-    }
 
     return (
         <div className="chat-app-container">
