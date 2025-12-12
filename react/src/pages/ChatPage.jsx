@@ -107,7 +107,7 @@ function ChatPage() {
                       <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Qu’est-ce que MoMo Advance (Avance avec MoMo) et comment l’utiliser?")}>
                           Avance Avec MOMO
                       </button>
-                      <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Comment puis-je emprunter de l'argent avec XtraCash par MoMo?")}>
+                      <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Comment puis-je emprunter de l'argent avec MoMo XtraCash?")}>
                           XtraCash
                       </button>
                       <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Comment envoyer de l’argent avec MoMo?")}>

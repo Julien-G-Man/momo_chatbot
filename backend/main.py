@@ -41,6 +41,7 @@ else:
     
 origins = [
     "https://momobot-cg.vercel.app",
+    "https://momobot-cg.netlify.app",
     "http://localhost:5173",
     "http://localhost:8000",
     "http://localhost:3000",
@@ -374,9 +375,9 @@ async def chat_with_bot(
 
     personalized_system_prompt = (
         SYSTEM_PROMPT
-        + f"\nThe current user's username is {current_user.username}. "
-          "Guest is not a name, it's the status of the user. "
-          "Occasionally respond using this name if appropriate."
+        + f"""\nThe current user's username is {current_user.username}.
+        Guest is not a name, it's the status of the user. 
+        Occasionally respond using this name if appropriate."""
     )
 
     system_message_content = (

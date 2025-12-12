@@ -11,7 +11,7 @@ console.log("Using backend URL:", BASE_API_URL);
 
 function App() {
   useEffect(() => {
-    // Ping backend once on load (safe for free tier)
+    // Ping backend once on load 
     pingHealth(BASE_API_URL);
   }, []);
 

@@ -18,6 +18,7 @@ AZURE_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 AZURE_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 AZURE_API_VERSION = "2025-01-01-preview"
 
+# Information Chunks Serving as knowledge base
 MOMO_ADVANCE = f"""
 What is MoMo Advance?
 MoMo Advance is a financial facility that allows MoMo subscribers to carry out transactions from their MoMo wallet even when their balance is zero or insufficient.

@@ -1,0 +1,10 @@
+[build]
+  # The build command runs from the Base Directory (react/)
+  command = "npm run build"
+  
+  # The output directory relative to the Base Directory (react/)
+  publish = "dist" 
+  
+[functions]
+  # The functions directory relative to the Base Directory (react/)
+  directory = "netlify/functions"
