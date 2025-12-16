@@ -3,12 +3,12 @@ import { Link } from "react-router-dom";
 import logoImage from "../assets/logo.png";
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BASE_API_URL || "http://localhost:8000";
-const API_URL = `${BACKEND_BASE_URL}/chat`;
-console.log("Chat API URL:", API_URL);
+const CHAT_API_URL = `${BACKEND_BASE_URL}/chat`;
+console.log("Chat API URL:", CHAT_API_URL);
 
 function ChatPage() {
     const [messages, setMessages] = useState([
-        { id: 1, text: "Yello Charismatique! Comment puis-je vous assister avec les services MTN MoMo aujourd'hui?", sender: "bot" },
+        { id: 1, text: "Yello Charismatique! Je suis MoMoChat, l'assistant client MTN MoMo, instantanée et fiable. Comment puis-je vous assister avec les services MTN MoMo aujourd'hui?", sender: "bot" },
     ]);
     const [inputText, setInputText] = useState("");
     const [showQuickActions, setShowQuickActions] = useState(true);
@@ -35,7 +35,7 @@ function ChatPage() {
         setIsLoading(true);
 
         try {
-            const response = await fetch(API_URL, {
+            const response = await fetch(CHAT_API_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: text }),
@@ -77,9 +77,7 @@ function ChatPage() {
             <header className="navbar">
                 <div className="logo">
                     <Link to="/">
-                        <span className="logo-icon">
-                            <img src={logoImage} alt="MomoChat Logo" style={{ height: "30px" }} />
-                        </span>
+                        <img src={logoImage} alt="MomoChat Logo" className="logo-icon" />
                     </Link>
                 </div>
                 <Link to="/" className="home-link">Home</Link>
@@ -104,11 +102,20 @@ function ChatPage() {
                 {/* 1. QUICK ACTIONS / KB SUGGESTIONS */}
                 {showQuickActions && (
                   <div className="quick-actions">
-                      <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Qu’est-ce que MoMo Advance (Avance avec MoMo) et comment l’utiliser?")}>
-                          Avance Avec MOMO
+                      <button className="quick-action-button" type="button" onClick={() => handleQuickAction(" Comment télécharger et utiliser l’application MTN MoMo pour payer mes factures et transférer de l’argent ?")}>
+                          MoMo App
                       </button>
                       <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Comment puis-je emprunter de l'argent avec MoMo XtraCash?")}>
                           XtraCash
+                      </button>
+                      <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Comment annuler une transaction P2P avec MoMo si je me suis trompé ?")}>
+                          Self Reversal
+                      </button>
+                      <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Qu’est-ce que MoMo Advance (Avance avec MoMo) et comment l’utiliser?")}>
+                          Avance Avec MOMO
+                      </button>
+                      <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Comment envoyer de l’argent à l’étranger avec MoMo via GIMACPAY ?")}>
+                          Remittance
                       </button>
                       <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Comment envoyer de l’argent avec MoMo?")}>
                           Transfert
@@ -120,7 +127,7 @@ function ChatPage() {
                 <form onSubmit={handleSendMessage} className="chat-input-area">
                     <input
                         type="text"
-                        placeholder="Ask MoMOChat..."
+                        placeholder="Ask MoMoChat..."
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
                         disabled={isLoading}

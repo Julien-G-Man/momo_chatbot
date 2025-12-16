@@ -16,9 +16,8 @@ from uuid import uuid4
 from fastapi import FastAPI, APIRouter, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from database import engine, Base
-from knowledge_base import INITIAL_KB_CHUNKS, SYSTEM_PROMPT, get_keyword_filtered_context, build_inverted_index
-from dependencies import get_db
+from database import engine, Base, get_db
+from kb_config import INITIAL_KB_CHUNKS, SYSTEM_PROMPT, get_keyword_filtered_context, build_inverted_index
 # from auth import get_password_hash, verify_password, create_access_token
 # from auth import get_current_user, get_optional_user
 # from auth_router import auth_router
@@ -73,7 +72,8 @@ async def startup_event():
     db = next(get_db())
     ensure_guest_user(db)
     print("Database tables initialized.")
-    print("Inverted index built.")
+    if INVERTED_INDEX:
+        print("Inverted index built.")
    
 @app.get("/health")
 def read_root():
@@ -194,11 +194,13 @@ def enforce_list_indentation(text, indent_spaces: int) -> str:
         lines = text.splitlines()
 
     new_lines = []
-    list_marker_pattern = re.compile(r'^\s*([*-]|\d+\.)\s*(.*)$')
+    list_marker_pattern = re.compile(r'^\s*([*\-•]|\d+\.)\s*(.*)$')
+
     numbered_list_counter = 0
 
     for line in lines:
         stripped = line.strip()
+        
         # Skip lines with command indicators
         if '->' in stripped or '→' in stripped or '=>' in stripped:
             new_lines.append(stripped)
@@ -209,9 +211,9 @@ def enforce_list_indentation(text, indent_spaces: int) -> str:
         if match:
             marker = match.group(1).strip()
             content = match.group(2).strip()
-            if marker in ['*', '-']:
+            
+            if marker in ['*', '-', '•', '❖']:
                 new_lines.append(f"{indent}• {content}")
-                numbered_list_counter = 0
             else:
                 if numbered_list_counter == 0:
                     numbered_list_counter = 1
@@ -220,7 +222,8 @@ def enforce_list_indentation(text, indent_spaces: int) -> str:
         else:
             # Plain line resets numbering
             new_lines.append(stripped)
-            numbered_list_counter = 0
+            if stripped:
+                numbered_list_counter = 0
 
     return '\n'.join(new_lines)
 

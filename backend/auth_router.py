@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from dependencies import get_db
+from database import get_db
 from auth import get_password_hash, verify_password, create_access_token, authenticate_user
 import models, schemas
 
@@ -41,7 +41,7 @@ def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
-    # 1. Look up user by username (form_data.username)
+    # Look up user by username (form_data.username)
     db_user = authenticate_user(db, form_data.username)
     
     if not db_user:
@@ -51,7 +51,7 @@ def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # 2. Add bypass for the GUEST account placeholder hash
+    # Add bypass for the GUEST account placeholder hash
     if db_user.username == "Guest" and db_user.hashed_password == "GUEST_PLACEHOLDER_HASH_DO_NOT_USE_FOR_LOGIN":
         # The Guest account should never be logged into.
         # We deny access here to prevent accidental login and token generation.
@@ -62,7 +62,7 @@ def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # 3. CRITICAL: HASH VERIFICATION (This is where the error occurred previously)
+    # CRITICAL: HASH VERIFICATION 
     if not verify_password(form_data.password, db_user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -70,7 +70,7 @@ def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # 4. If verification passes, create the token
+    # If verification passes, create the token
     access_token = create_access_token(
         data={"sub": db_user.username}
     )

@@ -3,7 +3,7 @@ import dotenv
 import logging
 import models
 from dotenv import load_dotenv
-from dependencies import get_db
+from database import get_db
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone

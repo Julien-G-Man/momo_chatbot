@@ -474,7 +474,6 @@ h1, h2, h3 {
     background-color: var(--chat-bot-bg);
     color: var(--chat-bot-text);
     border: 1px solid var(--chat-bot-border);
-    /* Reintroducing a distinct border/accent for the bot message */
     border-left: 5px solid var(--mtn-yellow); /* Prominent Yellow Line */
     border-bottom-left-radius: 5px; 
 }
@@ -520,7 +519,7 @@ h1, h2, h3 {
     }
 }
 
-/* --- Input Area Wrapper (FIXED AT BOTTOM) --- */
+/* --- Input Area Wrapper --- */
 .chat-input-area-wrapper {
     position: sticky;
     bottom: 0;
@@ -532,7 +531,7 @@ h1, h2, h3 {
     flex-shrink: 0;
 }
 
-/* Quick Actions/KB Suggestions (NEW SECTION) */
+/* Quick Actions/KB Suggestions  */
 .quick-actions {
     display: flex;
     gap: 10px;
@@ -726,7 +725,7 @@ h1, h2, h3 {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Optional: Make it look slightly different in Dark Mode if you apply dark mode to the Navbar */
+/* Make it look slightly different in Dark Mode if you apply dark mode to the Navbar */
 [data-theme='dark'] .lang-switcher-button {
     background-color: var(--mtn-yellow);
     color: var(--mo-mo-dark-blue);
