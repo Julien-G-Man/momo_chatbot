@@ -40,7 +40,7 @@ else:
     
 origins = [
     "https://momobot-cg.vercel.app",
-    "https://momobot-cg.netlify.app",
+    "https://momochat-cg.netlify.app",
     "http://localhost:5173",
     "http://localhost:8000",
     "http://localhost:3000",
