@@ -39,7 +39,7 @@ else:
     print("Azure OpenAI Inititialized.")
     
 origins = [
-    "https://momobot-cg.vercel.app",
+    "https://momochat-cg.vercel.app",
     "https://momochat-cg.netlify.app",
     "http://localhost:5173",
     "http://localhost:8000",
@@ -93,33 +93,43 @@ def read_root():
     return {"status": "ok", "message": "Chatbot API is running!"}
 
 def ensure_guest_user(db: Session, guest_id: int = 1, guest_username: str = "Guest"):
-    # try modern db.get, fallback to query
+    """Ensures guest user exists; creates if missing."""
     try:
         user = db.get(models.User, guest_id)
     except Exception:
         user = db.query(models.User).filter_by(id=guest_id).first()
 
     if user:
+        logger.debug(f"Guest user {guest_id} already exists")
         return user
 
+    # create guest user
     user = models.User(
         id=guest_id,
         username=guest_username,
-        # add any required fields your User model needs, e.g. email=None
-        created_at = datetime.utcnow() if hasattr(models.User, 'created_at') else None
+        # created_at = datetime.utcnow() if hasattr(models.User, 'created_at') else None
     )
     try:
         db.add(user)
         db.commit()
         db.refresh(user)
-        print("Guest user created with ID 1")
+        logger.info(f"✓ Guest user created (ID: {guest_id})")
+        return user
     except IntegrityError:
         db.rollback()
+        logger.warning(f"IntegrityError creating guest user; attempting to fetch...")
         try:
             user = db.query(models.User).filter_by(id=guest_id).first()
+            if user:
+                return user
         except Exception:
-            user = None
-    return user
+            pass
+        logger.error(f"Failed to ensure guest user {guest_id} exists")
+        raise HTTPException(status_code=500, detail="Database initialization failed")
+    except Exception as e:
+        db.rollback()
+        logger.exception(f"Unexpected error ensuring guest user: {e}")
+        raise
 
 MODEL_FOR_TOKEN_COUNT = "gpt-4o-mini"
 
@@ -340,6 +350,8 @@ async def chat_with_bot(
         username = "Guest"
 
     current_user = GuestUser()
+    ensure_guest_user(db, guest_id=current_user.id, guest_username=current_user.username)
+    
     logger.info("Chat request from public user (ID: %s, Username: %s)",
                 current_user.id, current_user.username)
 
