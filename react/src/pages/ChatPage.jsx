@@ -69,7 +69,7 @@ const parseMessageWithLinks = (text) => {
                     href={fullUrl} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    style={{ color: '#FF6B35', textDecoration: 'underline', cursor: 'pointer' }}
+                    style={{ color: '#0000EE', textDecoration: 'underline', cursor: 'pointer' }}
                 >
                     {url}
                 </a>
