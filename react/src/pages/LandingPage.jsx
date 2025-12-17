@@ -187,9 +187,9 @@ function LandingPage() {
         <footer className="momo-footer">
             <p>© {new Date().getFullYear()} MTN Momo. All rights reserved.</p>
             <p>
-            <a href="#">{t.privacyPolicy}</a> | 
-            <a href="#">{t.termsOfUse}</a> | 
-            <a href="#">{t.contactSupport}</a>
+            <a href="https://momo.mtn.com/privacy-policy/">{t.privacyPolicy}</a> | 
+            <a href="https://momo.mtn.com/terms-conditions/">{t.termsOfUse}</a> | 
+            <a href="tel:105">{t.contactSupport}</a>
             </p>
         </footer>
         </div>

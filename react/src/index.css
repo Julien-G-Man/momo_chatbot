@@ -740,3 +740,19 @@ h1, h2, h3 {
     font-family: 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', 'Android Emoji', 'EmojiOne', sans-serif;
     line-height: 1;
 }
+
+/* Hyperlinks */
+a {
+    color: #0000EE;  
+    text-decoration: underline;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+a:hover {
+    opacity: 0.8;
+}
+
+.bot-message a {
+    font-weight: 500;
+}

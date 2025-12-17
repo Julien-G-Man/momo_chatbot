@@ -6,6 +6,81 @@ const BACKEND_BASE_URL = import.meta.env.VITE_BASE_API_URL || "http://localhost:
 const CHAT_API_URL = `${BACKEND_BASE_URL}/chat`;
 console.log("Chat API URL:", CHAT_API_URL);
 
+const parseMessageWithLinks = (text) => {
+    // Regex patterns for URLs and emails
+    const urlPattern = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+    const emailPattern = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi;
+    
+    let parts = [];
+    let lastIndex = 0;
+    
+    // Split by URLs first
+    const urlMatches = [...text.matchAll(urlPattern)];
+    
+    if (urlMatches.length === 0) {
+        // No URLs, check for emails
+        const emailMatches = [...text.matchAll(emailPattern)];
+        if (emailMatches.length === 0) {
+            return text; // No links, return as-is
+        }
+        
+        // Process emails
+        let emailLastIndex = 0;
+        return emailMatches.map((match, i) => {
+            const email = match[0];
+            const startIndex = match.index;
+            const before = text.substring(emailLastIndex, startIndex);
+            emailLastIndex = startIndex + email.length;
+            
+            return (
+                <React.Fragment key={i}>
+                    {before}
+                    <a 
+                        href={`mailto:${email}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        style={{ color: '#0000EE', textDecoration: 'underline', cursor: 'pointer' }}
+                    >
+                        {email}
+                    </a>
+                </React.Fragment>
+            );
+        }).concat(text.substring(emailLastIndex));
+    }
+    
+    // Process URLs
+    let urlLastIndex = 0;
+    const urlParts = urlMatches.map((match, i) => {
+        const url = match[0];
+        const startIndex = match.index;
+        const before = text.substring(urlLastIndex, startIndex);
+        urlLastIndex = startIndex + url.length;
+        
+        // Ensure URL has protocol
+        let fullUrl = url;
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            fullUrl = 'https://' + url;
+        }
+        
+        return (
+            <React.Fragment key={i}>
+                {before}
+                <a 
+                    href={fullUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ color: '#FF6B35', textDecoration: 'underline', cursor: 'pointer' }}
+                >
+                    {url}
+                </a>
+            </React.Fragment>
+        );
+    });
+    
+    urlParts.push(text.substring(urlLastIndex));
+    return urlParts;
+};
+
 function ChatPage() {
     const [messages, setMessages] = useState([
         { id: 1, text: "Yello Charismatique! Je suis MoMoChat, l'assistant client MTN MoMo, instantanée et fiable. Comment puis-je vous assister avec les services MTN MoMo aujourd'hui?", sender: "bot" },
@@ -66,10 +141,12 @@ function ChatPage() {
         const messageClass = message.sender === "user" ? "user-message" : "bot-message";
         return (
             <div key={message.id} className={`message ${messageClass}`}>
-                <div className="message-text">{message.text}</div>
+                <div className="message-text">
+                    {message.sender === "bot" ? parseMessageWithLinks(message.text) : message.text}
+                </div>
             </div>
         );
-    };
+    };    
 
     return (
         <div className="chat-app-container">
@@ -102,23 +179,20 @@ function ChatPage() {
                 {/* 1. QUICK ACTIONS / KB SUGGESTIONS */}
                 {showQuickActions && (
                   <div className="quick-actions">
+                      <button className="quick-action-button" type="button" onClick={() => handleQuickAction(" Donne-moi un aperçu général des produits et services offerts par MTN MoMo. ")}>
+                          Services MTN MoMo
+                      </button>
                       <button className="quick-action-button" type="button" onClick={() => handleQuickAction(" Comment télécharger et utiliser l’application MTN MoMo pour payer mes factures et transférer de l’argent ?")}>
-                          MoMo App
+                          MTN MoMo App
                       </button>
                       <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Comment puis-je emprunter de l'argent avec MoMo XtraCash?")}>
                           XtraCash
                       </button>
-                      <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Comment annuler une transaction P2P avec MoMo si je me suis trompé ?")}>
-                          Self Reversal
-                      </button>
                       <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Qu’est-ce que MoMo Advance (Avance avec MoMo) et comment l’utiliser?")}>
-                          Avance Avec MOMO
+                          Avance Avec MoMo
                       </button>
                       <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Comment envoyer de l’argent à l’étranger avec MoMo via GIMACPAY ?")}>
                           Remittance
-                      </button>
-                      <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Comment envoyer de l’argent avec MoMo?")}>
-                          Transfert
                       </button>
                   </div>
                 )}
