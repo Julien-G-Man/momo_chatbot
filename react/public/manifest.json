@@ -1,9 +1,11 @@
 {
-  "name": "MoMo-Bot",
-  "short_name": "MoMo-Bot",
+  "name": "MoMoChat",
+  "short_name": "MoMoChat",
   "description": "Assistance Client MTN MoMo, Instantanée et Fiable.",
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-or-landscape",
   "background_color": "#092c4c", 
   "theme_color": "#ffcc00", 
   "icons": [
