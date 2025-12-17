@@ -346,7 +346,8 @@ The app enables users to:
   • Avoid errors during money transfers through built-in safeguards
 
 How It Works
-  • Download the app from PlayStore or AppStore
+  • Download the app from the Play Store: https://play.google.com/store/apps/details?id=com.consumerug
+  • Or download from the App Store: https://apps.apple.com/gb/app/mtn-momo/id1474080783
   • Alternatively, access via the direct link: https://mtnmomo.onelink.me/Mj3j/4qh5yeyo
   • Open the app and follow the on-screen instructions to log in and start using MoMo services
 
@@ -615,7 +616,101 @@ Security Notes
   • Customers are advised to keep their new PIN confidential and avoid using predictable numbers.
 """
 
-REGISTRATION = """ """
+OPEN_API = f""" 
+The MoMo Open API is a platform that allows businesses and institutions to integrate MoMo services into their systems. 
+It enables secure and automated financial operations.
+
+Target Audience
+  • Enterprises
+  • Entrepreneurs
+  • NGOs
+  • Institutions
+
+Available Services
+Through the Open API, organizations can perform:
+  • Cash collection
+  • Bulk payments
+  • Disbursements
+  • Remittance transactions
+  • USSD as a service
+  • KYC (Know Your Customer) as a service
+
+Fees
+Charges vary depending on the commercial terms:
+  • 3% for web transactions
+  • 3.5% for USSD transactions
+  • Free for certain services (e.g., KYC, USSD as a service)
+  • 1% maximum or $1 per transaction for some operations
+"""
+
+RESERVATION = """
+Reservation (Billets d’avion)
+MoMo allows subscribers to book airline tickets and pay directly via their MoMo wallet.
+
+Target Audience
+  • All MoMo subscribers (standard accounts, pilot profiles, PPE, trial accounts).
+
+
+How it works
+❖ For RwandAir:
+  • Visit the official website https://www.rwandair.com
+  • Complete the booking process
+  • Select MTN MoMo as the payment method
+
+❖ For EcAir:
+  • Visit https://www.fly-ecair.com or download the ECAir app
+  • Complete the booking process
+  • Select MTN MoMo as the payment method
+
+Fees
+No additional fees are charged for using MoMo as the payment method.
+"""
+
+ASSURANCE = """
+Assurance (AGC-VIE & Prévoyance Épargne)
+
+❖ Assurance AGC-VIE Protect (Life Insurance)
+  • Description: Life insurance for MoMo account holders.
+  • Eligibility: All MoMo subscribers aged 18 to 64. Coverage ends at age 65.
+  • Benefits: 500,000 FCFA payout in case of accidental death.
+  • Cost: 1,800 FCFA per year or 600 FCFA per month.
+  • Beneficiaries: Indemnity paid to legal heirs upon presentation of death certificate and ID.
+  • Subscription: Dial *105# → Option 2 (Paiement Facture) → Enter your code PIN → Option 7 (Assurances) → Option 1 (AGC-VIE) → Choose the product and register.
+
+❖ Assurance Prévoyance Épargne (Savings Insurance)
+  • Description: Savings insurance for MoMo account holders.
+  • Eligibility: All MoMo subscribers aged 18 and above.
+  • Cost: Minimum contribution of 5,000 FCFA per month, or daily contributions starting from 200 FCFA.
+  • Beneficiaries: Indemnity paid to heirs upon declaration with ID.
+  • Subscription: Dial *105# → Option 2 (Paiement Facture) → Enter your code PIN → Option 7 (Assurances) → Option 2 (Prévoyance Épargne)  → Choose the product and register.
+"""
+
+MAMBOPAY = """
+Mambopay is a digital voucher (bon d’achat digital) payment solution. 
+It allows a MoMo subscriber to pay for goods or services on behalf of a third party, while ensuring traceability, transparency, and security of the transaction.
+
+Target Audience
+All MoMo subscribers:
+  • MTNCG Client Mobile Money
+  • MTNCG MoMoPay
+  • MTNCG Pilot Profile
+  • MTNCG PPE
+  • MTNCG Trial Account
+
+How It Works
+To create a bon d’achat digital (digital voucher) via Mambopay, the user must follow these steps:
+  • Dial *105# OK
+  • Select 2 Paiement Facture
+  • Select 9 Mambopay
+  • Choose 1 Mambopay as the service path
+  • Select 1 Acheter un coupon
+  • Choose the usage category of the coupon: (Santé, Supermarché/Zando, Kilesi, Cadeau Shopping, Cadeau Bien-être, Restaurant, Hébergement)
+  • Choose the validity period of the coupon: (1 Jour, 7 Jours, 30 Jours, 90 Jours)
+  • Enter the coupon amount (e.g., 500 FCFA)
+  • Enter the beneficiary’s phone number
+  • Confirm the creation: The system displays a summary: “Voulez-vous vraiment créer un coupon de [montant] FCFA pour une validité de [durée] uniquement utilisable auprès de [fournisseur] ?”. Choose 1 Oui to confirm
+  • Receive confirmation: “Coupon de [montant] FCFA créé avec succès pour [fournisseur]. Expire le [date]. Activez-le via le menu MoMo *105#.”
+"""
 
 SUPPORT = """
 CONTACT INFORMATION

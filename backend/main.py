@@ -17,7 +17,7 @@ from fastapi import FastAPI, APIRouter, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from database import engine, Base, get_db
-from kb_config import INITIAL_KB_CHUNKS, SYSTEM_PROMPT, get_keyword_filtered_context, build_inverted_index
+from kb_config import INITIAL_KB_CHUNKS, SYSTEM_PROMPT, CHUNK_METADATA, preprocess_chunks, get_keyword_filtered_context, build_inverted_index
 # from auth import get_password_hash, verify_password, create_access_token
 # from auth import get_current_user, get_optional_user
 # from auth_router import auth_router
@@ -61,19 +61,31 @@ guest_sessions: dict[str, list[dict]] = {}
 def create_database_tables():
     """Creates all database tables defined in models.py."""
     Base.metadata.create_all(bind=engine)
-
-
-INVERTED_INDEX = build_inverted_index(INITIAL_KB_CHUNKS)
-    
+   
 @app.on_event("startup")
 async def startup_event():
-    print("Initializing database tables...")
+    print("🔧 Initializing database tables...")
     create_database_tables()
     db = next(get_db())
     ensure_guest_user(db)
-    print("Database tables initialized.")
-    if INVERTED_INDEX:
-        print("Inverted index built.")
+    print("✓ Database ready")
+    
+    print("🔧 Building KB inverted index...")
+    global INVERTED_INDEX
+    INVERTED_INDEX = build_inverted_index(INITIAL_KB_CHUNKS)
+    print(f"✓ Inverted index ready ({len(INVERTED_INDEX)} unique tokens)")
+    
+    print("🔧 Pre-computing chunk metadata...")
+    global CHUNK_METADATA
+    from kb_config import CHUNK_METADATA as KB_METADATA_MODULE
+    chunk_meta = preprocess_chunks(INITIAL_KB_CHUNKS)
+    
+    import kb_config
+    kb_config.CHUNK_METADATA.update(chunk_meta)  
+    print(f"✓ Metadata cached for {len(CHUNK_METADATA)} chunks")
+    print(f"✓ Chunk keys: {list(kb_config.CHUNK_METADATA.keys())}")
+    
+    print("\n✅ All systems ready!\n")
    
 @app.get("/health")
 def read_root():
@@ -166,65 +178,45 @@ def strip_markdown(text: str) -> str:
     
     return text.strip()
     
-def enforce_list_indentation(text, indent_spaces: int) -> str:
+def enforce_list_indentation(text: str) -> str:
     """
-    Detects and enforces consistent indentation and list markers for
-    bulleted and numbered lists in a block of text.
-
-    Args:
-        text (str or list): The text output from the LLM, can be a string or nested list.
-        indent_spaces (int): The number of spaces to use for indentation.
-
-    Returns:
-        str: The text with enforced indentation and clean markers.
+    Enforces three-level list indentation:
+    ❖ Main items (no indent)
+      • Sub-items (2-space indent)
+        ◦ Second-level sub-items (4-space indent)
     """
-    indent = ' ' * indent_spaces
-
-    # Flatten nested lists if necessary
-    def flatten_lines(lines):
-        for item in lines:
-            if isinstance(item, list):
-                yield from flatten_lines(item)
-            else:
-                yield str(item)
-
-    if isinstance(text, list):
-        lines = list(flatten_lines(text))
-    else:
-        lines = text.splitlines()
-
+    lines = text.splitlines()
     new_lines = []
-    list_marker_pattern = re.compile(r'^\s*([*\-•]|\d+\.)\s*(.*)$')
-
-    numbered_list_counter = 0
-
+    
     for line in lines:
         stripped = line.strip()
         
-        # Skip lines with command indicators
-        if '->' in stripped or '→' in stripped or '=>' in stripped:
-            new_lines.append(stripped)
-            numbered_list_counter = 0
+        # preserve mpty lines
+        if not stripped:
+            new_lines.append("")
             continue
-
-        match = list_marker_pattern.match(stripped)
-        if match:
-            marker = match.group(1).strip()
-            content = match.group(2).strip()
-            
-            if marker in ['*', '-', '•', '❖']:
-                new_lines.append(f"{indent}• {content}")
-            else:
-                if numbered_list_counter == 0:
-                    numbered_list_counter = 1
-                new_lines.append(f"{indent}{numbered_list_counter}. {content}")
-                numbered_list_counter += 1
-        else:
-            # Plain line resets numbering
-            new_lines.append(stripped)
-            if stripped:
-                numbered_list_counter = 0
-
+        
+        # Main items (❖)
+        if stripped.startswith('❖'):
+            content = stripped[1:].strip()
+            new_lines.append(f"❖ {content}")
+            continue
+        
+        # Second-level sub-items (◦)
+        if stripped.startswith('◦'):
+            content = stripped[1:].strip()
+            new_lines.append(f"        ◦ {content}")
+            continue
+        
+        # First-level sub-items (•)
+        if stripped.startswith('•'):
+            content = stripped[1:].strip()
+            new_lines.append(f"    • {content}")
+            continue
+        
+        # Regular text or other content
+        new_lines.append(line)
+    
     return '\n'.join(new_lines)
 
 
@@ -252,6 +244,8 @@ async def call_azure_openai_with_backoff(
         ]
     elif isinstance(messages_or_message, list):
         messages = messages_or_message
+        if not messages or messages[0]["role"] != "system":
+            messages.insert(0, {"role": "system", "content": SYSTEM_PROMPT})
     else:
         raise ValueError("messages_or_message must be a list or str")
 
@@ -414,7 +408,7 @@ async def chat_with_bot(
     try:
         ai_response = await call_azure_openai_with_backoff(messages)
         ai_response = strip_markdown(ai_response)
-        ai_response = enforce_list_indentation(ai_response, 4)
+        ai_response = enforce_list_indentation(ai_response)
         print(f"\nBot Response: {ai_response}")
 
         combined_input_for_count = " ".join(
