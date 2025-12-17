@@ -72,7 +72,6 @@ const languageData = {
     }
 };
 
-
 function LandingPage() {
     // Language State: Initialize to French (fr)
     const [language, setLanguage] = useState('fr'); 
