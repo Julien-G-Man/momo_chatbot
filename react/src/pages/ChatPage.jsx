@@ -119,13 +119,13 @@ function ChatPage() {
             if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
 
             const data = await response.json();
-            const botResponseText = data.response || "MomoChat couldn't find an answer. Try rephrasing.";
+            const botResponseText = data.response || "Oops, I couldn't find an answer. Please, try rephrasing.";
 
             const newBotMessage = { id: Date.now() + 1, text: botResponseText, sender: "bot" };
             setMessages((prev) => [...prev, newBotMessage]);
         } catch (error) {
             console.error("API Connection Error:", error);
-            const errorMessage = { id: Date.now() + 2, text: "Connection error. Please check your FastAPI server.", sender: "bot" };
+            const errorMessage = { id: Date.now() + 2, text: "Oops, I'm having a little trouble connecting. Ensure you're online and try again!", sender: "bot" };
             setMessages((prev) => [...prev, errorMessage]);
         } finally {
             setIsLoading(false);
