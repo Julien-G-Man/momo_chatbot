@@ -4,7 +4,6 @@ import logoImage from "../assets/logo.png";
 
 const BACKEND_BASE_URL = import.meta.env.VITE_BASE_API_URL || "http://localhost:8000";
 const CHAT_API_URL = `${BACKEND_BASE_URL}/chat`;
-console.log("Chat API URL:", CHAT_API_URL);
 
 const parseMessageWithLinks = (text) => {
     // Regex patterns for URLs and emails

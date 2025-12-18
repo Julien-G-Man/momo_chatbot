@@ -7,7 +7,6 @@ import "./index.css";
 
 // Determine base backend URL depending on environment
 const BASE_API_URL = import.meta.env.VITE_BASE_API_URL || "http://localhost:8000";
-console.log("Using backend URL:", BASE_API_URL);
 
 function App() {
   useEffect(() => {
