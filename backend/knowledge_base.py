@@ -335,7 +335,7 @@ Target Merchant Categories:
 """
 
 MOMOAPP = """
-MTN MoMo App
+MTN MoMo App  (Application MoMo App)
 The MTN MoMo App is a mobile application that allows MoMo subscribers to manage their Mobile Money account and perform transactions securely and conveniently.
 It is accessible to all MoMo subscribers who own a smartphone.
 The app enables users to:
@@ -447,10 +447,35 @@ CORPORATE SERVIES (BankTech for Businesses)
 ❖ Bulk Payments: Salary disbursements, supplier payments, and corporate transfers directly from bank accounts to MoMo wallets.
 ❖ Wallet-to-Bank Transfers: Businesses can move collected MoMoPay funds into their corporate bank accounts.
 ❖ Fees: Range between 0% and 1.5%, depending on transaction type and agreement with the bank.
+
+XTRATIME
+Description
+MTN XtraTime is a service that allows MTN Congo subscribers to access airtime or bundles (Internet, Voice, SMS) even when they don’t have sufficient funds in their account. 
+It ensures continued access to essential services during low-balance situations.
+
+Target Audience
+  • The service is available to MTN Congo clients who have been active on the network for at least 3 months.
+
+How It Works (Comment ça marche)
+  • To access XtraTime, the subscriber must have less than 100 FCFA in their main account. 
+  • They can then dial *125*1*6# to request a credit advance.
+
+Available Credit Options and Fees
+Subscribers can request different credit amounts, each with a corresponding fee:
+  • A request of 100 FCFA incurs a fee of 15 FCFA
+  • A request of 300 FCFA incurs a fee of 45 FCFA
+  • A request of 500 FCFA incurs a fee of 55 FCFA
+  • A request of 750 FCFA incurs a fee of 113 FCFA
+  • A request of 1000 FCFA incurs a fee of 150 FCFA
+  • A request of 2000 FCFA incurs a fee of 300 FCFA
+  • A request of 5000 FCFA incurs a fee of 750 FCFA
+
+How to Check Usage (Comment vérifier)
+To verify current XtraTime status or outstanding balance, the subscriber can dial *555*4#.
 """
 
 REMITTANCE = """
-REMITTANCE & INTEROPERABILITY
+REMITTANCE & INTEROPERABILITY (Remittence et Interoperabilité – Push / Pull)
 Remittance services allow MoMo subscribers to send and receive money across borders, directly into or out of their MoMo wallet.
 
 REMITTANCE IN (International Money Transfer – Incoming)
