@@ -2,7 +2,7 @@ export async function pingHealth(apiUrl) {
   if (!apiUrl) return;
 
   try {
-    const response = await fetch(`${apiUrl}/health`);
+    const response = await fetch(`${apiUrl}/ping`);
     if (!response.ok) throw new Error(`Health check failed: ${response.status}`);
     console.log("Backend is alive!");
   } catch (err) {
