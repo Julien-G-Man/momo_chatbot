@@ -298,7 +298,7 @@ It also supports supplier payments, salary disbursements, bill payments, and wal
 
 How It Works for Customers:
   • Dial *105# → Select option 6
-  • Or scan the merchant’s QR code using the MTN MoMo app
+  • Or scan the merchant’s QR code using the MTN MoMo App
   • No fees are charged to the customer for merchant payments
 
 How It Works for Merchants:

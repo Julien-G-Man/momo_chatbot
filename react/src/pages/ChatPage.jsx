@@ -6,13 +6,49 @@ const BACKEND_BASE_URL = import.meta.env.VITE_BASE_API_URL || "http://localhost:
 const CHAT_API_URL = `${BACKEND_BASE_URL}/chat`;
 
 const parseMessageWithLinks = (text) => {
+    // 1. ADDED: Regex for Markdown links [Text](URL)
+    const markdownLinkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|www\.[^\s)]+)\)/gi;
+    
     // Regex patterns for URLs and emails
     const urlPattern = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
     const emailPattern = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/gi;
-    
-    let parts = [];
+
+    // Check for Markdown links and replace them with anchor tags
+    // We do this first so the raw URL pattern doesn't "steal" the URL from the brackets
     let lastIndex = 0;
-    
+    let parts = [];
+    const markdownMatches = [...text.matchAll(markdownLinkPattern)];
+
+    if (markdownMatches.length > 0) {
+        markdownMatches.forEach((match, i) => {
+            const startIndex = match.index;
+            const fullMatch = match[0];
+            const linkText = match[1];
+            let url = match[2];
+
+            // Add text before the markdown link
+            parts.push(text.substring(lastIndex, startIndex));
+
+            if (url.startsWith('www.')) url = 'https://' + url;
+
+            parts.push(
+                <a 
+                    key={`md-${i}`} 
+                    href={url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{ color: '#0000EE', textDecoration: 'underline', cursor: 'pointer' }}
+                >
+                    {linkText}
+                </a>
+            );
+            lastIndex = startIndex + fullMatch.length;
+        });
+        // Process the remainder of the string for emails/urls if needed, 
+        // or just return if the AI strictly uses Markdown
+        text = text.substring(lastIndex);
+    }
+
     // Split by URLs first
     const urlMatches = [...text.matchAll(urlPattern)];
     
@@ -20,12 +56,12 @@ const parseMessageWithLinks = (text) => {
         // No URLs, check for emails
         const emailMatches = [...text.matchAll(emailPattern)];
         if (emailMatches.length === 0) {
-            return text; // No links, return as-is
+            return parts.length > 0 ? [...parts, text] : text; 
         }
         
         // Process emails
         let emailLastIndex = 0;
-        return emailMatches.map((match, i) => {
+        const emailParts = emailMatches.map((match, i) => {
             const email = match[0];
             const startIndex = match.index;
             const before = text.substring(emailLastIndex, startIndex);
@@ -44,7 +80,8 @@ const parseMessageWithLinks = (text) => {
                     </a>
                 </React.Fragment>
             );
-        }).concat(text.substring(emailLastIndex));
+        });
+        return [...parts, ...emailParts, text.substring(emailLastIndex)];
     }
     
     // Process URLs
@@ -55,7 +92,6 @@ const parseMessageWithLinks = (text) => {
         const before = text.substring(urlLastIndex, startIndex);
         urlLastIndex = startIndex + url.length;
         
-        // Ensure URL has protocol
         let fullUrl = url;
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
             fullUrl = 'https://' + url;
@@ -76,8 +112,7 @@ const parseMessageWithLinks = (text) => {
         );
     });
     
-    urlParts.push(text.substring(urlLastIndex));
-    return urlParts;
+    return [...parts, ...urlParts, text.substring(urlLastIndex)];
 };
 
 function ChatPage() {
@@ -181,7 +216,7 @@ function ChatPage() {
                       <button className="quick-action-button" type="button" onClick={() => handleQuickAction(" Donne-moi un aperçu général des produits et services offerts par MTN MoMo. ")}>
                           Services MTN MoMo
                       </button>
-                      <button className="quick-action-button" type="button" onClick={() => handleQuickAction(" Comment télécharger et utiliser l’application MTN MoMo pour payer mes factures et transférer de l’argent ?")}>
+                      <button className="quick-action-button" type="button" onClick={() => handleQuickAction(" Comment télécharger et utiliser l’application MTN MoMo App pour payer mes factures et transférer de l’argent ?")}>
                           MTN MoMo App
                       </button>
                       <button className="quick-action-button" type="button" onClick={() => handleQuickAction("Comment puis-je emprunter de l'argent avec MoMo XtraCash?")}>
