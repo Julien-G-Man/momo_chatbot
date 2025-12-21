@@ -5,4 +5,5 @@ __pychache__
 .cache_ggshield
 __pycache__/
 frontend
+tests/
 test.py

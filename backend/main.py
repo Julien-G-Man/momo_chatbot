@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import time
 import httpx
 import asyncio
 import logging
@@ -28,6 +29,8 @@ app = FastAPI(title="MMC Chatbot API")
 # app.include_router(auth_router)
 
 load_dotenv()
+
+AZURE_SEMAPHORE = asyncio.Semaphore(50)
 
 AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
@@ -64,6 +67,7 @@ def create_database_tables():
    
 @app.on_event("startup")
 async def startup_event():
+    print("======================================")
     print("🔧 Initializing database tables...")
     create_database_tables()
     db = next(get_db())
@@ -77,7 +81,6 @@ async def startup_event():
     
     print("🔧 Pre-computing chunk metadata...")
     global CHUNK_METADATA
-    from kb_config import CHUNK_METADATA as KB_METADATA_MODULE
     chunk_meta = preprocess_chunks(INITIAL_KB_CHUNKS)
     
     import kb_config
@@ -85,14 +88,17 @@ async def startup_event():
     print(f"✓ Metadata cached for {len(CHUNK_METADATA)} chunks")
     print(f"✓ Chunk keys: {list(kb_config.CHUNK_METADATA.keys())}")
     
-    print("\n✅ All systems ready!\n")
+    print("✅ All systems ready!")
+    print("======================================")
    
-@app.get("/health")
+@app.get("/ping")
 def read_root():
     """Simple health check endpoint."""
     return {"status": "ok", "message": "Chatbot API is running!"}
 
-def ensure_guest_user(db: Session, guest_id: int = 1, guest_username: str = "Guest"):
+def ensure_guest_user(db: Session, guest_id: int = 1, 
+    guest_username: str = "Guest", guest_email: str = "guest@momo.mtn.cg", guest_password="guest-user-access"
+):
     """Ensures guest user exists; creates if missing."""
     try:
         user = db.get(models.User, guest_id)
@@ -102,12 +108,16 @@ def ensure_guest_user(db: Session, guest_id: int = 1, guest_username: str = "Gue
     if user:
         logger.debug(f"Guest user {guest_id} already exists")
         return user
+    else:
+        print()
 
     # create guest user
     user = models.User(
-        id=guest_id,
-        username=guest_username,
-        # created_at = datetime.utcnow() if hasattr(models.User, 'created_at') else None
+        id = guest_id,
+        username = guest_username,
+        email = guest_email,
+        created_at = datetime.utcnow() if hasattr(models.User, 'created_at') else None,
+        hashed_password = guest_password
     )
     try:
         db.add(user)
@@ -171,7 +181,25 @@ def log_kb_chunk_token_usage(kb_chunks: Dict[str, str], model: str = MODEL_FOR_T
         total += tokens
     logger.info("KB TOTAL tokens (all chunks): %d", total)
 
+def log_context_selection(query: str, context: str, is_overview: bool):
+    """Logs metadata about the retrieved chunks without flooding the console with raw text."""
+    # Split context by your headers [SECTION_NAME]
+    sections = [line.strip("[]") for line in context.splitlines() if line.startswith("[") and line.endswith("]")]
+    
+    char_count = len(context)
+    # Rough estimate of tokens (1 token ≈ 4 chars)
+    est_tokens = char_count // 4 
 
+    log_msg = (
+        f"\n{'='*40}\n"
+        f"🔍 CONTEXT LOG | Query: '{query}'\n"
+        f"📝 Mode: {'GLOBAL OVERVIEW' if is_overview else 'KEYWORD FILTERED'}\n"
+        f"📦 Chunks Included ({len(sections)}): {', '.join(sections)}\n"
+        f"📊 Size: ~{est_tokens} tokens ({char_count} chars)\n"
+        f"{'='*40}"
+    )
+    print(log_msg)
+    
 def strip_markdown(text: str) -> str:
     """Removes non-essential Markdown characters from a string, preserving list markers and codes."""
     text = text.replace('***', '').replace('**', '')
@@ -233,9 +261,9 @@ def enforce_list_indentation(text: str) -> str:
 # --- Utility Functions ---
 async def call_azure_openai_with_backoff(
     messages_or_message: Union[List[dict], str],
-    max_retries: int = 5,
+    max_retries: int = 7,
     initial_backoff: float = 1.0,
-    max_backoff: float = 30.0,
+    max_backoff: float = 45.0,
     timeout_seconds: float = 30.0
 ) -> str:
     """
@@ -270,11 +298,15 @@ async def call_azure_openai_with_backoff(
     }
     payload = {
         "messages": messages,
-        "temperature": 0.5,
-        "max_tokens": 512,
+        "temperature": 0.3,
+        "max_tokens": 1200,
         "stream": False
     }
-
+    
+    # Tracking varilables
+    total_wait_time = 0.0
+    start_time = time.perf_counter()
+    
     # Use an AsyncClient context manager to ensure proper cleanup
     timeout = httpx.Timeout(timeout_seconds, read=timeout_seconds, connect=10.0)
     last_exc = None
@@ -282,55 +314,58 @@ async def call_azure_openai_with_backoff(
     async with httpx.AsyncClient(timeout=timeout) as client:
         for attempt in range(1, max_retries + 1):
             try:
+                # Track start of this specific attempt
+                attempt_start = time.perf_counter()
+                
                 resp = await client.post(url, headers=headers, json=payload)
                 resp.raise_for_status()
+                
+                # SUCCESS: Log the total journey time
+                total_duration = time.perf_counter() - start_time
+                logger.info(
+                    "✅ Azure Success | Attempt: %d | Total Duration: %.2fs | (Wait time: %.2fs)",
+                    attempt, total_duration, total_wait_time
+                )
+                
                 result = resp.json()
-
-                # defensive parsing
-                choices = result.get("choices")
-                if not choices or not isinstance(choices, list):
-                    raise ValueError("Response missing 'choices' array")
-
-                first_choice = choices[0]
-                # Azure chat shape: choices[0].message.content
-                message_obj = first_choice.get("message") or {}
-                content = message_obj.get("content")
-                if not isinstance(content, str):
-                    raise ValueError("Response 'message.content' missing or not a string")
-
-                return content.strip()
+                return result["choices"][0]["message"]["content"].strip()
 
             except httpx.HTTPStatusError as e:
                 status = e.response.status_code
-                safe_text = (e.response.text or "")[:1000]  # avoid huge logs
-                logger.warning("Azure API HTTP error (attempt %d/%d): %s %s", attempt, max_retries, status, safe_text)
-
-                if status in (401, 403):
-                    raise HTTPException(status_code=500, detail="Authorization/configuration error for Azure OpenAI.") from e
-
-                # If not retryable and not transient, fail fast
-                if status not in (429, 502, 503, 504):
-                    raise HTTPException(status_code=502, detail=f"Azure OpenAI returned HTTP {status}") from e
-
                 last_exc = e
+                
+                # Check for "Wait and Retry" status codes
+                if status in (429, 500, 502, 503, 504):
+                    # 1. Try to get wait time from Azure's header
+                    retry_header = e.response.headers.get("Retry-After")
+                    if retry_header and retry_header.isdigit():
+                        sleep_for = float(retry_header) + random.uniform(0, 1)
+                    else:
+                        # 2. Fallback to our own exponential backoff
+                        backoff = min(max_backoff, initial_backoff * (2 ** (attempt - 1)))
+                        sleep_for = random.uniform(0, backoff)
+
+                    total_wait_time += sleep_for
+                    logger.warning(
+                        "⚠️ Azure %d (Attempt %d/%d) | Wait: %.2fs | Total Wait: %.2fs",
+                        status, attempt, max_retries, sleep_for, total_wait_time
+                    )
+                    
+                    if attempt < max_retries:
+                        await asyncio.sleep(sleep_for)
+                        continue
+                
+                # If we get here, it's a non-retryable error (like 401 or 400)
+                raise HTTPException(status_code=status, detail=f"Azure error: {e.response.text}")
 
             except (httpx.RequestError, ValueError) as e:
-                logger.warning("Request/parse error on attempt %d/%d: %s", attempt, max_retries, str(e))
                 last_exc = e
+                logger.error("❌ Request Error: %s", str(e))
+                if attempt == max_retries:
+                    raise HTTPException(status_code=503, detail="Max retries reached.")
+                await asyncio.sleep(initial_backoff)
 
-            # if will retry
-            if attempt == max_retries:
-                logger.error("Exhausted retries calling Azure OpenAI")
-                raise HTTPException(status_code=503, detail="Service unavailable after retries.") from last_exc
-
-            # exponential backoff with full jitter
-            backoff = min(max_backoff, initial_backoff * (2 ** (attempt - 1)))
-            sleep_for = random.uniform(0, backoff)
-            logger.info("Retrying in %.2f seconds (attempt %d/%d)...", sleep_for, attempt + 1, max_retries)
-            await asyncio.sleep(sleep_for)
-
-    # unreachable
-    raise HTTPException(status_code=500, detail="Unexpected failure calling Azure OpenAI")
+    raise HTTPException(status_code=500, detail="Unexpected error loop.")
 
 MAX_HISTORY_TURNS = 2
 
@@ -344,13 +379,18 @@ async def chat_with_bot(
     Injects relevant knowledge base data and maintains a short chat history
     for context. Supports guest users without breaking if the user is unauthenticated.
     """    
-    
     class GuestUser:
         id = 1
-        username = "Guest"
+        username = "Guest"  
+        email = "guest@momo.mtn.cg"
+        hashed_password="guest-user-access"  
+    
+    request_id = str(uuid4())[:8]
+    print(f"[{request_id}] Starting request for user...{GuestUser.id}")
+    
 
     current_user = GuestUser()
-    ensure_guest_user(db, guest_id=current_user.id, guest_username=current_user.username)
+    ensure_guest_user(db, guest_id=current_user.id, guest_username=current_user.username, guest_email=current_user.email, guest_password=current_user.hashed_password)
     
     logger.info("Chat request from public user (ID: %s, Username: %s)",
                 current_user.id, current_user.username)
@@ -361,19 +401,42 @@ async def chat_with_bot(
             status_code=400,
             detail="`message` must be a non-empty string in the request body."
         )
-
+    
+    # These cover the common ways users ask for the overview quick action
+    OVERVIEW_INTENTS = [
+        " Donne-moi un aperçu général des produits et services offerts par MTN MoMo. ",
+        "apercu general", "tous les services", "overview of services", 
+        "liste des produits", "que propose momo", "what does momo offer",
+        "services offerts", "all services", "tout"
+    ]
+    
+    compare_msg = user_message.lower().strip()
+    compare_msg = compare_msg.replace("é", "e").replace("è", "e").replace("ç", "c")
+    
+    is_overview_requested = any(intent in compare_msg for intent in OVERVIEW_INTENTS)
+    
     try:
-        relevant_context = get_keyword_filtered_context(
-            user_message,
-            INITIAL_KB_CHUNKS,
-            INVERTED_INDEX,
-            max_chunks=2,
-            max_kb_tokens=600
-        )
+        if is_overview_requested:
+            all_chunks = []
+            for key, content in INITIAL_KB_CHUNKS.items():
+                all_chunks.append(f"[{key}\n{content}]")
+                
+            relevant_context = "\n\n".join(all_chunks)   
+            logger.info("General Overview Triggered: Providing full KB context.") 
+        else:
+            relevant_context = get_keyword_filtered_context(
+                user_message,
+                INITIAL_KB_CHUNKS,
+                INVERTED_INDEX,
+                max_chunks=5,
+                max_kb_tokens=3000
+            )
     except Exception as e:
         logger.exception("Error retrieving KB context: %s", e)
         relevant_context = ""
 
+    log_context_selection(user_message, relevant_context, is_overview_requested)
+    
     include_kb = False
     if relevant_context.strip() and not (
         relevant_context.lower().startswith("no specific") or
@@ -388,11 +451,22 @@ async def chat_with_bot(
         Guest is not a name, it's the status of the user. 
         Occasionally respond using this name if appropriate."""
     )
-
-    system_message_content = (
-        f"{personalized_system_prompt}\n\nKnowledge Base Data:\n{relevant_context}"
-        if include_kb else personalized_system_prompt
-    )
+    
+    if is_overview_requested:
+        system_message_content = (
+            f"""{personalized_system_prompt}\n\n
+            USER REQUEST: General Overview.\n
+            INSTRUCTION: Provide a concise summary of all services. 
+            Be comprehensive but keep descriptions to 2-3 lines per service.
+            Do not list every fee, just the main utility of each category.\n\n
+            Knowledge Base Data:\n{relevant_context}
+            """
+        )        
+    else:    
+        system_message_content = (
+            f"{personalized_system_prompt}\n\nKnowledge Base Data:\n{relevant_context}"
+            if include_kb else personalized_system_prompt
+        )
 
     history_rows = (
         db.query(models.ChatMessage)
@@ -417,56 +491,61 @@ async def chat_with_bot(
     messages.extend(conversation_messages)
     messages.append({"role": "user", "content": user_message})
 
-    try:
-        ai_response = await call_azure_openai_with_backoff(messages)
-        ai_response = strip_markdown(ai_response)
-        ai_response = enforce_list_indentation(ai_response)
-        print(f"\nBot Response: {ai_response}")
-
-        combined_input_for_count = " ".join(
-            [system_message_content, " ".join(history_plain_text_parts), user_message]
-        )
-
-        log_kb_chunk_token_usage(INITIAL_KB_CHUNKS)
-
-        input_chars, input_words, input_tokens = count_number_of_tokens(combined_input_for_count)
-        output_chars, output_words, output_tokens = count_number_of_tokens(ai_response)
-
-        hist_chars, hist_words, hist_tokens = count_number_of_tokens(" ".join(history_plain_text_parts))
-
-        print("\nToken counts summary:")
-        print(f"  INPUT  -> Characters: {input_chars} | Words: {input_words} | Tokens ({MODEL_FOR_TOKEN_COUNT}): {input_tokens}")
-        print(f"  OUTPUT -> Characters: {output_chars} | Words: {output_words} | Tokens ({MODEL_FOR_TOKEN_COUNT}): {output_tokens}")
-        print(f"  HISTORY-> Characters: {hist_chars} | Words: {hist_words} | Tokens ({MODEL_FOR_TOKEN_COUNT}): {hist_tokens}")
-
-        chat_log = models.ChatMessage(
-            user_id=current_user.id,
-            user_query=user_message,
-            ai_response=ai_response,
-        )
-        db.add(chat_log)
+    async with AZURE_SEMAPHORE:
         try:
-            db.commit()
-            db.refresh(chat_log)
-        except IntegrityError as e:
-            db.rollback()
-            ensure_guest_user(db, guest_id=current_user.id, guest_username=current_user.username)
+            ai_response = await call_azure_openai_with_backoff(messages)
+            ai_response = strip_markdown(ai_response)
+            ai_response = enforce_list_indentation(ai_response)
+            print(f"\nBot Response: {ai_response}")
+
+            combined_input_for_count = " ".join(
+                [system_message_content, " ".join(history_plain_text_parts), user_message]
+            )
+
+            log_kb_chunk_token_usage(INITIAL_KB_CHUNKS)
+
+            input_chars, input_words, input_tokens = count_number_of_tokens(combined_input_for_count)
+            output_chars, output_words, output_tokens = count_number_of_tokens(ai_response)
+
+            hist_chars, hist_words, hist_tokens = count_number_of_tokens(" ".join(history_plain_text_parts))
+
+            print("\n====================================== ")
+            print("Token counts summary:")
+            print(f"  INPUT  -> Characters: {input_chars} | Words: {input_words} | Tokens ({MODEL_FOR_TOKEN_COUNT}): {input_tokens}")
+            print(f"  OUTPUT -> Characters: {output_chars} | Words: {output_words} | Tokens ({MODEL_FOR_TOKEN_COUNT}): {output_tokens}")
+            print(f"  HISTORY-> Characters: {hist_chars} | Words: {hist_words} | Tokens ({MODEL_FOR_TOKEN_COUNT}): {hist_tokens}")
+            print("====================================== \n")
+
+            chat_log = models.ChatMessage(
+                user_id=current_user.id,
+                user_query=user_message,
+                ai_response=ai_response,
+            )
             db.add(chat_log)
             try:
                 db.commit()
                 db.refresh(chat_log)
-            except Exception:
+            except IntegrityError as e:
                 db.rollback()
-                logger.exception("Failed to save chat log even after creating guest user.")
-          
-        return ChatResponse(response=ai_response)
+                ensure_guest_user(db, guest_id=current_user.id, guest_username=current_user.username)
+                db.add(chat_log)
+                try:
+                    db.commit()
+                    db.refresh(chat_log)
+                except Exception:
+                    db.rollback()
+                    logger.exception("Failed to save chat log even after creating guest user.")
+             
+            print(f"[{request_id}] Finished request.")
+             
+            return ChatResponse(response=ai_response)
 
-    except HTTPException as e:
-        logger.error("Chat failed with HTTP Error: %s", getattr(e, "detail", str(e)))
-        raise e
-    except Exception as e:
-        logger.exception("Unexpected error while processing chat request: %s", e)
-        raise HTTPException(
-            status_code=500,
-            detail="An unexpected error occurred while processing the request."
-        ) from e
+        except HTTPException as e:
+            logger.error("Chat failed with HTTP Error: %s", getattr(e, "detail", str(e)))
+            raise e
+        except Exception as e:
+            logger.exception("Unexpected error while processing chat request: %s", e)
+            raise HTTPException(
+                status_code=500,
+                detail="An unexpected error occurred while processing the request."
+            ) from e
