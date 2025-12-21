@@ -32,6 +32,8 @@ function App() {
         registration.unregister();
         console.log("Legacy Service Worker Unregistered");
       }
+    }).catch(function(err) {
+      console.log('Service Worker registration failed: ', err);
     });
   }  
 

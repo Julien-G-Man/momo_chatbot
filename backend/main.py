@@ -90,9 +90,13 @@ async def startup_event():
     
     print("✅ All systems ready!")
     print("======================================")
+
+@app.get("/")
+async def root():
+    return {"message": "Backend API is running"}
    
 @app.get("/ping")
-def read_root():
+def check_health():
     """Simple health check endpoint."""
     return {"status": "ok", "message": "Chatbot API is running!"}
 
@@ -108,8 +112,6 @@ def ensure_guest_user(db: Session, guest_id: int = 1,
     if user:
         logger.debug(f"Guest user {guest_id} already exists")
         return user
-    else:
-        print()
 
     # create guest user
     user = models.User(
