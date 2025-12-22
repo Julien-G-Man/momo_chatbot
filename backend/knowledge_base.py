@@ -17,6 +17,7 @@ How it works:
  • Choose the type of bundle (voice, SMS, or data).
 Billing: The cost of the selected bundle is deducted from the subscriber’s MoMo wallet balance.
 
+Keywords: [achat, forfait, credit, airtime, bundle, data, voix, recharge, sms, internet, mobile, money, momo]
 """
 
 TRANSFERS = f"""
@@ -75,6 +76,7 @@ Billing:
  • With MoMo account: 3.5% for amounts 1–200,000 FCFA; 5,000 + 1% for 200,001–250,000 FCFA.
  • Without MoMo account: 3.75% for amounts 100–181,818 FCFA; 5,000 + 1% for 181,819–250,000 FCFA.
 
+Keywords: [transfert, envoi, argent, money, send, p2p, cash, retrait, depot, deposit, withdrawal, p2c, atm, gab, fees, frais]
 """
 
 MOMO_ADVANCE = f"""
@@ -159,6 +161,8 @@ Example Transactions:
  
 Unsubscription:
  • User receives confirmation message upon successful opt-out. 
+
+Keywords: [avance, credit, pret, borrow, loan, overdraft, decouvert, balance, zero, eligibility, eligibilite, interest, interet, dettes, repayment, remboursement]
 """
 
 ECW_TRANSACTIONS_DETAILS = f""" 
@@ -228,6 +232,7 @@ Interpretation Guidelines:
 - "Last Activity Time" = Timestamp of most recent account interaction.
 - "Account Profile" = Indicates user type (e.g., staff, regular customer).
  
+Keywords: [transaction, historique, ecw, wallet, details, balance, solde, available, disponible, overdraft, status, limit, limite, charges, fees, frais] 
 """
 
 XTRACASH = f"""
@@ -289,6 +294,7 @@ Dial *105#, then4, then 2 to access XtraCash services. Menu options include:
 ❖ Loan History (Mini Historique):
   • Dial *105*42# then select option 4.
 
+Keywords: [xtracash, loan, pret, emprunt, borrow, uba, 7-day, 28-day, daily, journalier, interest, interet, penalty, penalite, deadline, echeance]
 """
 
 MOMOPAY = f"""
@@ -331,7 +337,8 @@ Target Merchant Categories:
   • Transport: Public and private transport operators
   • HORECA: Hotels, restaurants, cafés
   • Services: Hairdressers, tailors, laundries  
-    
+
+Keywords: [momopay, merchant, marchand, paiement, payment, qr code, scan, pay, salaries, supplier, fournisseur, commission, fees, frais]    
 """
 
 MOMOAPP = """
@@ -352,6 +359,8 @@ How It Works
   • Open the app and follow the on-screen instructions to log in and start using MoMo services
 
 Fees: Using the MTN MoMo App is free of charge. No additional fees are applied for accessing services through the app.
+
+Keywords: [app, application, download, telecharger, playstore, appstore, smartphone, digital, interface, mobile]
 """
 
 BILL_PAYMENT = """
@@ -404,6 +413,8 @@ Use Cases:
   • Redeeming promotional or partner-issued coupons.
 
 Billing: The coupon value is applied directly to the bill. No extra fees are charged.
+
+Keywords: [facture, bill, payment, paiement, canal+, startimes, e2c, canalbox, coupon, voucher, bon, utility, abonnement, subscription]
 """
 
 BANKTECH = f"""
@@ -472,6 +483,9 @@ Subscribers can request different credit amounts, each with a corresponding fee:
 
 How to Check Usage (Comment vérifier)
 To verify current XtraTime status or outstanding balance, the subscriber can dial *555*4#.
+
+Keywords: [bank, banque, wallet, transfer, transfert, mucodec, bgfi, bsca, atm, gab, retrait, push, pull, interoperability, interoperabilite]
+[xtratime, credit, airtime, secours, advance, communication, balance, solde, emergency, sos]
 """
 
 REMITTANCE = """
@@ -561,6 +575,8 @@ Additional Fee Grid (Frais F.CFA)
   • Between 100,001 and 300,000 FCFA: 500 FCFA
 
 Daily Limit: Push/Pull operations are capped at 750,000 FCFA per day.
+
+Keywords: [remittance, remittence, international, transfert, worldremit, moneygram, gimacpay, cemac, gabon, cameroun, pays, country, incoming, outgoing, entrant, sortant]
 """
 
 SELF_REVERSAL = """
@@ -600,6 +616,7 @@ If the B Number does not validate within 2 hours:
   • The BO will validate the reversal and return the funds to the A Number.
   • SLA for BO validation: 2 hours
 
+Keywords: [reversal, annulation, erreur, error, cancel, wrong, tromper, validation, approve, approuver, 2 hours, 2 heures]
 """
 
 SELF_PIN_RESET = """
@@ -639,6 +656,8 @@ Security Notes
   • The reset process uses personal identification to verify the account holder.
   • If any of the details entered are incorrect, the reset will fail.
   • Customers are advised to keep their new PIN confidential and avoid using predictable numbers.
+
+Keywords: [pin, code, reset, reinitialiser, oublié, forgot, security, securite, secret, change, modifier]
 """
 
 OPEN_API = f""" 
@@ -666,6 +685,8 @@ Charges vary depending on the commercial terms:
   • 3.5% for USSD transactions
   • Free for certain services (e.g., KYC, USSD as a service)
   • 1% maximum or $1 per transaction for some operations
+
+Keywords: [api, open, developer, developpeur, integration, enterprise, entreprise, automated, kyc, collection, encaissement]
 """
 
 RESERVATION = """
@@ -689,6 +710,8 @@ How it works
 
 Fees
 No additional fees are charged for using MoMo as the payment method.
+
+Keywords: [reservation, billet, avion, flight, ticket, rwandair, ecair, travel, voyage, booking]
 """
 
 ASSURANCE = """
@@ -708,6 +731,8 @@ Assurance (AGC-VIE & Prévoyance Épargne)
   • Cost: Minimum contribution of 5,000 FCFA per month, or daily contributions starting from 200 FCFA.
   • Beneficiaries: Indemnity paid to heirs upon declaration with ID.
   • Subscription: Dial *105# → Option 2 (Paiement Facture) → Enter your code PIN → Option 7 (Assurances) → Option 2 (Prévoyance Épargne)  → Choose the product and register.
+
+Keywords: [assurance, insurance, vie, life, protect, agc-vie, epargne, savings, death, deces, coverage, couverture]
 """
 
 MAMBOPAY = """
@@ -735,6 +760,8 @@ To create a bon d’achat digital (digital voucher) via Mambopay, the user must 
   • Enter the beneficiary’s phone number
   • Confirm the creation: The system displays a summary: “Voulez-vous vraiment créer un coupon de [montant] FCFA pour une validité de [durée] uniquement utilisable auprès de [fournisseur] ?”. Choose 1 Oui to confirm
   • Receive confirmation: “Coupon de [montant] FCFA créé avec succès pour [fournisseur]. Expire le [date]. Activez-le via le menu MoMo *105#.”
+
+Keywords: [mambopay, coupon, bon, d'achat, voucher, digital, beneficiary, beneficiaire, shopping, cadeau, gift]
 """
 
 SUPPORT = """
