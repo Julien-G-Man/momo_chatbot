@@ -162,7 +162,8 @@ Example Transactions:
 Unsubscription:
  • User receives confirmation message upon successful opt-out. 
 
-Keywords: [avance, credit, pret, borrow, loan, overdraft, decouvert, balance, zero, eligibility, eligibilite, interest, interet, dettes, repayment, remboursement]
+Keywords: [avance, credit, pret, borrow, loan, overdraft, decouvert, balance, zero, eligibility, eligibilite, interest, interet, dettes, 
+pourcentage, empruntre, emprunt, payment, remboursement, jour, jours]
 """
 
 ECW_TRANSACTIONS_DETAILS = f""" 
@@ -294,7 +295,7 @@ Dial *105#, then4, then 2 to access XtraCash services. Menu options include:
 ❖ Loan History (Mini Historique):
   • Dial *105*42# then select option 4.
 
-Keywords: [xtracash, loan, pret, emprunt, borrow, uba, 7-day, 28-day, daily, journalier, interest, interet, penalty, penalite, deadline, echeance]
+Keywords: [xtracash, loan, pret, emprunt, borrow, uba, 7-day, 28-day, daily, jour, jours, journalier, interest, interet, pourcentage, empruntre, payment, remboursement, penalty, penalite, deadline, echeance]
 """
 
 MOMOPAY = f"""
